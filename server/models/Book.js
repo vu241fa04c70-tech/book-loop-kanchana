@@ -6,7 +6,7 @@ const bookSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please add a book title'],
       trim: true,
-      maxlength: [120, 'Title cannot exceed 120 characters']
+      maxlength: [150, 'Title cannot exceed 150 characters']
     },
     author: {
       type: String,
@@ -21,19 +21,25 @@ const bookSchema = new mongoose.Schema(
     description: {
       type: String,
       required: [true, 'Please add a description of the book'],
-      maxlength: [2000, 'Description cannot exceed 2000 characters']
+      maxlength: [2500, 'Description cannot exceed 2500 characters']
     },
     category: {
       type: String,
       required: [true, 'Please select a category'],
       enum: [
-        'Engineering',
         'Computer Science',
+        'Programming',
+        'Data Structures and Algorithms',
+        'Artificial Intelligence',
+        'Mathematics',
+        'Science',
+        'Sciences',
+        'Novels',
+        'Competitive Examination Preparation',
+        'Engineering',
         'Medicine & Health',
         'Business & Economics',
         'Law',
-        'Sciences',
-        'Mathematics',
         'Literature & Fiction',
         'Social Sciences',
         'Exam Preparation',
@@ -103,6 +109,10 @@ const bookSchema = new mongoose.Schema(
     viewsCount: {
       type: Number,
       default: 0
+    },
+    isSample: {
+      type: Boolean,
+      default: false
     }
   },
   {
@@ -112,6 +122,6 @@ const bookSchema = new mongoose.Schema(
 
 // Text index for search
 bookSchema.index({ title: 'text', author: 'text', subject: 'text', description: 'text' });
-bookSchema.index({ category: 1, listingType: 1, college: 1, availability: 1 });
+bookSchema.index({ category: 1, listingType: 1, college: 1, availability: 1, isSample: 1 });
 
 module.exports = mongoose.model('Book', bookSchema);

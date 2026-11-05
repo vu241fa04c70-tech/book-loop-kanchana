@@ -41,16 +41,17 @@ const ExplorePage = () => {
   const categories = [
     'All',
     'Computer Science',
+    'Programming',
+    'Data Structures and Algorithms',
+    'Artificial Intelligence',
+    'Mathematics',
+    'Science',
+    'Novels',
+    'Competitive Examination Preparation',
     'Engineering',
     'Medicine & Health',
     'Business & Economics',
     'Law',
-    'Sciences',
-    'Mathematics',
-    'Literature & Fiction',
-    'Social Sciences',
-    'Exam Preparation',
-    'General Non-Fiction',
     'Other'
   ];
 
@@ -310,17 +311,13 @@ const ExplorePage = () => {
 
         {/* Books Results Column */}
         <main className="lg:col-span-3 space-y-6">
-          {/* Top Sort & Mobile Filter Toggle Bar */}
+          {/* Top Sort Bar */}
           <div className="bg-white px-5 py-3.5 rounded-2xl border border-slate-100 shadow-soft flex items-center justify-between">
-            <button
-              onClick={() => setShowMobileFilters(!showMobileFilters)}
-              className="lg:hidden flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-slate-100 px-3 py-2 rounded-xl"
-            >
-              <Filter className="w-3.5 h-3.5 text-accent" />
-              <span>Filters</span>
-            </button>
+            <span className="text-xs font-bold text-slate-700">
+              {total} {total === 1 ? 'Book' : 'Books'} Found
+            </span>
 
-            <div className="flex items-center gap-2 ml-auto text-xs font-medium text-slate-500">
+            <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
               <span className="hidden sm:inline">Sort by:</span>
               <select
                 value={sort}
@@ -351,9 +348,9 @@ const ExplorePage = () => {
           ) : (
             <EmptyState
               title="No books match your criteria"
-              description="Try adjusting your filters, clearing price constraints, or searching with broader keywords."
-              actionLabel="Reset All Filters"
-              actionLink="#"
+              description="Be the first to list a textbook under this search or reset your filters."
+              actionLabel="Add Your First Book"
+              actionLink="/add-book"
             />
           )}
 

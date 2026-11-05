@@ -8,8 +8,17 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 const app = require('./app');
 const connectDB = require('./config/db');
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB and ensure sample books exist
+connectDB().then(async (conn) => {
+  if (conn) {
+    try {
+      const { seedSampleBooks } = require('./utils/seedData');
+      await seedSampleBooks();
+    } catch (e) {
+      console.warn('Auto-seed check notice:', e.message);
+    }
+  }
+});
 
 const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
@@ -26,12 +35,10 @@ try {
   });
 
   io.on('connection', (socket) => {
-    // Join conversation room
     socket.on('join_conversation', (conversationId) => {
       socket.join(conversationId);
     });
 
-    // Handle new message broadcast
     socket.on('send_message', (data) => {
       if (data && data.conversationId) {
         io.to(data.conversationId).emit('receive_message', data);
@@ -43,7 +50,6 @@ try {
     });
   });
 
-  // Attach io to app for access in controllers if needed
   app.set('io', io);
   console.log('Socket.IO real-time engine initialized.');
 } catch (e) {
@@ -61,5 +67,4 @@ server.listen(PORT, () => {
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
   console.error(`Unhandled Rejection Error: ${err.message}`);
-  // Keep server running in development
 });

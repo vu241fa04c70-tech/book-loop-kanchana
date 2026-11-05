@@ -13,11 +13,14 @@ import {
   Users,
   MapPin,
   Gift,
-  Star
+  Star,
+  PlusCircle,
+  BookX
 } from 'lucide-react';
 import api from '../services/api';
 import BookCard from '../components/BookCard';
 import { BookGridSkeleton } from '../components/LoadingSkeleton';
+import EmptyState from '../components/EmptyState';
 
 const LandingPage = () => {
   const [featuredBooks, setFeaturedBooks] = useState([]);
@@ -28,14 +31,22 @@ const LandingPage = () => {
 
   useEffect(() => {
     const fetchLandingData = async () => {
+      setLoading(true);
       try {
         const [featuredRes, recentRes] = await Promise.all([
-          api.get('/books?featured=true&limit=4'),
-          api.get('/books?limit=8&sort=latest')
+          api.get('/books?featured=true&limit=8'),
+          api.get('/books?limit=12&sort=latest')
         ]);
+
         if (featuredRes.data.success) {
-          setFeaturedBooks(featuredRes.data.books);
+          // If no specific featured flags are set, take first 4 books as featured
+          if (featuredRes.data.books && featuredRes.data.books.length > 0) {
+            setFeaturedBooks(featuredRes.data.books);
+          } else if (recentRes.data.books && recentRes.data.books.length > 0) {
+            setFeaturedBooks(recentRes.data.books.slice(0, 4));
+          }
         }
+
         if (recentRes.data.success) {
           setRecentBooks(recentRes.data.books);
         }
@@ -59,17 +70,19 @@ const LandingPage = () => {
   };
 
   const categories = [
-    { name: 'Computer Science', count: '140+ books', icon: '💻', color: 'bg-blue-50 text-blue-700' },
-    { name: 'Engineering', count: '210+ books', icon: '⚙️', color: 'bg-amber-50 text-amber-700' },
-    { name: 'Medicine & Health', count: '95+ books', icon: '🩺', color: 'bg-emerald-50 text-emerald-700' },
-    { name: 'Business & Economics', count: '120+ books', icon: '📈', color: 'bg-indigo-50 text-indigo-700' },
-    { name: 'Mathematics', count: '80+ books', icon: '📐', color: 'bg-purple-50 text-purple-700' },
-    { name: 'Literature & Fiction', count: '160+ books', icon: '📚', color: 'bg-rose-50 text-rose-700' }
+    { name: 'Computer Science', icon: '💻', count: 'Algorithms & Systems' },
+    { name: 'Programming', icon: '⚡', count: 'Clean Code, Python, Web' },
+    { name: 'Data Structures and Algorithms', icon: '🌳', count: 'CLRS, LeetCode, Java' },
+    { name: 'Artificial Intelligence', icon: '🤖', count: 'Deep Learning & ML' },
+    { name: 'Mathematics', icon: '📐', count: 'Calculus, Linear Algebra' },
+    { name: 'Science', icon: '🔬', count: 'Physics, Chemistry, Bio' },
+    { name: 'Novels', icon: '📖', count: 'Classic & Modern Fiction' },
+    { name: 'Competitive Examination Preparation', icon: '🎯', count: 'GRE, TOEFL, MCAT' }
   ];
 
   const stats = [
-    { label: 'Textbooks Listed', value: '1,200+', icon: BookOpen },
-    { label: 'Student Savings', value: '$45,000+', icon: DollarSign },
+    { label: 'Sample & Student Books', value: '24+', icon: BookOpen },
+    { label: 'Estimated Savings', value: '$45,000+', icon: DollarSign },
     { label: 'Successful Swaps', value: '480+', icon: RefreshCw },
     { label: 'Campus Communities', value: '18+', icon: Users }
   ];
@@ -156,7 +169,7 @@ const LandingPage = () => {
                 <Search className="w-5 h-5 text-slate-400 flex-shrink-0" />
                 <input
                   type="text"
-                  placeholder="Enter book title, author, course, or ISBN..."
+                  placeholder="Search by title, author, course, or ISBN..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
@@ -220,7 +233,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* 2. Popular Categories */}
+      {/* 2. Popular Academic Categories */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
           <div>
@@ -235,63 +248,76 @@ const LandingPage = () => {
             to="/explore"
             className="text-sm font-bold text-primary hover:text-accent flex items-center gap-1 group"
           >
-            <span>View all categories</span>
+            <span>View all in catalog</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {categories.map((cat, i) => (
             <Link
               key={i}
               to={`/explore?category=${encodeURIComponent(cat.name)}`}
-              className="bg-white p-5 rounded-2xl border border-slate-100 shadow-soft hover:shadow-soft-lg hover:-translate-y-1 transition-all text-center flex flex-col items-center justify-center group"
+              className="bg-white p-5 rounded-2xl border border-slate-100 shadow-soft hover:shadow-soft-lg hover:-translate-y-1 transition-all text-left flex items-start gap-4 group"
             >
-              <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">{cat.icon}</div>
-              <h4 className="font-bold text-sm text-slate-900 group-hover:text-primary transition-colors">
-                {cat.name}
-              </h4>
-              <p className="text-xs text-slate-400 mt-1 font-medium">{cat.count}</p>
+              <div className="text-3xl group-hover:scale-110 transition-transform flex-shrink-0">
+                {cat.icon}
+              </div>
+              <div>
+                <h4 className="font-bold text-sm text-slate-900 group-hover:text-primary transition-colors line-clamp-1">
+                  {cat.name}
+                </h4>
+                <p className="text-[11px] text-slate-400 mt-1 line-clamp-1">{cat.count}</p>
+              </div>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* 3. Featured Books Carousel / Grid */}
-      {featuredBooks.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 text-xs font-extrabold rounded-md bg-accent/20 text-accent">
-                  HANDPICKED
-                </span>
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Campus Spotlights
-                </span>
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-primary tracking-tight mt-1">
-                Featured Book Listings
-              </h2>
+      {/* 3. Featured Books Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 text-xs font-extrabold rounded-md bg-accent/20 text-accent">
+                HANDPICKED
+              </span>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Campus Highlights
+              </span>
             </div>
-            <Link
-              to="/explore?featured=true"
-              className="text-sm font-bold text-primary hover:text-accent flex items-center gap-1 group"
-            >
-              <span>Explore more</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            <h2 className="text-2xl sm:text-3xl font-black text-primary tracking-tight mt-1">
+              Featured Books
+            </h2>
           </div>
+          <Link
+            to="/explore?featured=true"
+            className="text-sm font-bold text-primary hover:text-accent flex items-center gap-1 group"
+          >
+            <span>Explore all featured</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </div>
 
+        {loading ? (
+          <BookGridSkeleton count={4} />
+        ) : featuredBooks.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {featuredBooks.map((book) => (
               <BookCard key={book._id} book={book} />
             ))}
           </div>
-        </section>
-      )}
+        ) : (
+          <EmptyState
+            title="No featured books at the moment"
+            description="Be the first to list a textbook on your campus!"
+            actionLabel="Add Your First Book"
+            actionLink="/add-book"
+          />
+        )}
+      </section>
 
-      {/* 4. Recently Added Books */}
+      {/* 4. Recently Added Books Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
           <div>
@@ -299,7 +325,7 @@ const LandingPage = () => {
               Fresh From Campus
             </span>
             <h2 className="text-2xl sm:text-3xl font-black text-primary tracking-tight mt-1">
-              Recently Added Textbooks
+              Recently Added Books
             </h2>
           </div>
           <Link
@@ -320,7 +346,12 @@ const LandingPage = () => {
             ))}
           </div>
         ) : (
-          <p className="text-center py-12 text-slate-500">No books found.</p>
+          <EmptyState
+            title="No books available yet"
+            description="Start building your campus sharing circle by adding the first textbook."
+            actionLabel="Add Your First Book"
+            actionLink="/add-book"
+          />
         )}
       </section>
 
@@ -361,8 +392,8 @@ const LandingPage = () => {
               to="/add-book"
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-accent hover:bg-accent-hover text-white text-sm font-bold shadow-soft transition-all"
             >
-              <span>Start by Listing a Book</span>
-              <ArrowRight className="w-4 h-4" />
+              <PlusCircle className="w-4 h-4" />
+              <span>List a Book Now</span>
             </Link>
           </div>
         </div>

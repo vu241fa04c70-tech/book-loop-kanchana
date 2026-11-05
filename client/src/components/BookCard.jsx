@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, MapPin, ArrowRightLeft, DollarSign, Gift, Eye } from 'lucide-react';
+import { Heart, MapPin, ArrowRightLeft, DollarSign, Gift, Eye, Sparkles } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -48,7 +48,6 @@ const BookCard = ({ book, onWishlistChange, isSavedInitial = false }) => {
     }
   };
 
-  // Calculate discount percentage
   const discountPercent =
     book.originalPrice && book.originalPrice > book.price
       ? Math.round(((book.originalPrice - book.price) / book.originalPrice) * 100)
@@ -68,7 +67,7 @@ const BookCard = ({ book, onWishlistChange, isSavedInitial = false }) => {
           }}
         />
 
-        {/* Listing Type Tag */}
+        {/* Listing Type & Sample Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
           <span
             className={`px-2.5 py-1 text-xs font-bold rounded-lg shadow-sm backdrop-blur-md flex items-center gap-1 ${
@@ -88,6 +87,16 @@ const BookCard = ({ book, onWishlistChange, isSavedInitial = false }) => {
           {discountPercent && book.listingType === 'Sell' && (
             <span className="px-2 py-0.5 text-[11px] font-extrabold rounded-md bg-accent text-white shadow-sm w-fit">
               {discountPercent}% OFF
+            </span>
+          )}
+
+          {book.isSample ? (
+            <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-amber-500/90 text-white shadow-xs backdrop-blur-xs w-fit flex items-center gap-1">
+              <Sparkles className="w-2.5 h-2.5" /> Sample
+            </span>
+          ) : (
+            <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-700/90 text-white shadow-xs backdrop-blur-xs w-fit">
+              Verified Student
             </span>
           )}
         </div>
@@ -118,9 +127,9 @@ const BookCard = ({ book, onWishlistChange, isSavedInitial = false }) => {
       <div className="p-4 flex-1 flex flex-col justify-between">
         <div>
           <div className="flex items-center justify-between text-[11px] font-bold text-accent uppercase tracking-wider mb-1">
-            <span>{book.category}</span>
+            <span className="truncate max-w-[170px]">{book.category}</span>
             {book.viewsCount > 0 && (
-              <span className="text-slate-600 font-medium flex items-center gap-1">
+              <span className="text-slate-400 font-medium flex items-center gap-1">
                 <Eye className="w-3 h-3" /> {book.viewsCount}
               </span>
             )}
@@ -136,8 +145,8 @@ const BookCard = ({ book, onWishlistChange, isSavedInitial = false }) => {
             by {book.author}
           </p>
 
-          <div className="flex items-center gap-1 text-[11px] text-slate-600 mt-3 truncate">
-            <MapPin className="w-3.5 h-3.5 text-slate-600 flex-shrink-0" />
+          <div className="flex items-center gap-1 text-[11px] text-slate-500 mt-3 truncate">
+            <MapPin className="w-3.5 h-3.5 text-accent flex-shrink-0" />
             <span className="truncate">{book.college}</span>
           </div>
         </div>
@@ -149,7 +158,7 @@ const BookCard = ({ book, onWishlistChange, isSavedInitial = false }) => {
               <div className="flex items-baseline gap-1">
                 <span className="text-lg font-black text-emerald-600">FREE</span>
                 {book.originalPrice > 0 && (
-                  <span className="text-xs text-slate-600 line-through">
+                  <span className="text-xs text-slate-400 line-through">
                     ${book.originalPrice}
                   </span>
                 )}
@@ -160,7 +169,7 @@ const BookCard = ({ book, onWishlistChange, isSavedInitial = false }) => {
                   ${book.price}
                 </span>
                 {book.originalPrice > 0 && (
-                  <span className="text-xs text-slate-600 line-through">
+                  <span className="text-xs text-slate-400 line-through">
                     ${book.originalPrice}
                   </span>
                 )}

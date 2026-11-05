@@ -1,0 +1,15 @@
+{
+  "name": "bookloop-root",
+  "version": "1.0.0",
+  "description": "BookLoop – Smart Book Exchange & Marketplace Platform",
+  "scripts": {
+    "server": "cd server && npm start",
+    "client": "cd client && npm run dev",
+    "seed": "cd server && npm run seed",
+    "test": "cd server && npm test",
+    "build:client": "cd client && npm run build"
+  },
+  "keywords": ["book-loop", "book-exchange", "marketplace", "mern", "react", "nodejs"],
+  "author": "BookLoop Team",
+  "license": "MIT"
+}

@@ -1,0 +1,15 @@
+node_modules
+.env
+.env.local
+dist
+build
+client/dist
+server/uploads/*
+!server/uploads/.gitkeep
+.DS_Store
+Thumbs.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.idea
+.vscode

@@ -13,6 +13,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import DonationsPage from './pages/DonationsPage';
+import ExchangePage from './pages/ExchangePage';
 import MessagesPage from './pages/MessagesPage';
 import AdminPage from './pages/AdminPage';
 
@@ -25,6 +26,7 @@ function App() {
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/explore" element={<ExplorePage />} />
+          <Route path="/exchange" element={<ExchangePage />} />
           <Route path="/books/:id" element={<BookDetailsPage />} />
           <Route path="/donations" element={<DonationsPage />} />
           <Route path="/login" element={<LoginPage />} />

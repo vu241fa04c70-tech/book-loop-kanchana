@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import {
   Search,
   Filter,
@@ -10,7 +10,11 @@ import {
   BookOpen,
   DollarSign,
   Tag,
-  GraduationCap
+  GraduationCap,
+  Sparkles,
+  ArrowRightLeft,
+  Gift,
+  X
 } from 'lucide-react';
 import api from '../services/api';
 import BookCard from '../components/BookCard';
@@ -20,7 +24,7 @@ import EmptyState from '../components/EmptyState';
 const ExplorePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Search and Filter states
+  // Filter States
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [category, setCategory] = useState(searchParams.get('category') || 'All');
   const [listingType, setListingType] = useState(searchParams.get('listingType') || 'All');
@@ -31,32 +35,33 @@ const ExplorePage = () => {
   const [sort, setSort] = useState(searchParams.get('sort') || 'latest');
   const [page, setPage] = useState(parseInt(searchParams.get('page') || '1', 10));
 
-  // Data states
+  // Data States
   const [books, setBooks] = useState([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showFiltersPanel, setShowFiltersPanel] = useState(false);
 
   const categories = [
     'All',
-    'Computer Science',
     'Programming',
+    'Computer Science',
     'Data Structures and Algorithms',
     'Artificial Intelligence',
     'Mathematics',
     'Science',
     'Novels',
-    'Competitive Examination Preparation',
-    'Engineering',
-    'Medicine & Health',
-    'Business & Economics',
-    'Law',
-    'Other'
+    'Competitive Examination Preparation'
+  ];
+
+  const listingTypes = [
+    { label: 'All Types', value: 'All' },
+    { label: 'Buy (For Sale)', value: 'Sell' },
+    { label: 'Swap (Exchange)', value: 'Exchange' },
+    { label: 'Free Donation', value: 'Donate' }
   ];
 
   const conditions = ['All', 'Like New', 'Good', 'Fair', 'Poor'];
-  const listingTypes = ['All', 'Sell', 'Exchange', 'Donate'];
 
   const colleges = [
     'All',
@@ -70,7 +75,7 @@ const ExplorePage = () => {
     'NYU'
   ];
 
-  // Fetch books whenever filters change
+  // Fetch books from backend API
   useEffect(() => {
     const fetchBooks = async () => {
       setLoading(true);
@@ -94,29 +99,34 @@ const ExplorePage = () => {
           setTotalPages(res.data.totalPages || 1);
         }
       } catch (err) {
-        console.error('Error fetching books:', err);
+        console.error('Error fetching books in ExplorePage:', err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchBooks();
+
+    // Synchronize query params in URL
+    const nextParams = new URLSearchParams();
+    if (search.trim()) nextParams.set('search', search.trim());
+    if (category !== 'All') nextParams.set('category', category);
+    if (listingType !== 'All') nextParams.set('listingType', listingType);
+    if (condition !== 'All') nextParams.set('condition', condition);
+    if (college !== 'All') nextParams.set('college', college);
+    if (minPrice !== '') nextParams.set('minPrice', minPrice);
+    if (maxPrice !== '') nextParams.set('maxPrice', maxPrice);
+    if (sort !== 'latest') nextParams.set('sort', sort);
+    if (page > 1) nextParams.set('page', page.toString());
+    setSearchParams(nextParams, { replace: true });
   }, [search, category, listingType, condition, college, minPrice, maxPrice, sort, page]);
 
-  // Sync to URL parameters
-  const updateFilterParam = (key, val) => {
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
     setPage(1);
-    const newParams = new URLSearchParams(searchParams);
-    if (!val || val === 'All') {
-      newParams.delete(key);
-    } else {
-      newParams.set(key, val);
-    }
-    newParams.set('page', '1');
-    setSearchParams(newParams);
   };
 
-  const resetAllFilters = () => {
+  const handleResetFilters = () => {
     setSearch('');
     setCategory('All');
     setListingType('All');
@@ -126,51 +136,82 @@ const ExplorePage = () => {
     setMaxPrice('');
     setSort('latest');
     setPage(1);
-    setSearchParams({});
   };
+
+  const hasActiveFilters =
+    search.trim() !== '' ||
+    category !== 'All' ||
+    listingType !== 'All' ||
+    condition !== 'All' ||
+    college !== 'All' ||
+    minPrice !== '' ||
+    maxPrice !== '' ||
+    sort !== 'latest';
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Header & Search */}
-      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-soft">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-black text-primary tracking-tight">Explore Campus Books</h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Showing <span className="font-bold text-slate-800">{total}</span> books available for
-              purchase, swap, or free donation.
-            </p>
-          </div>
+      {/* 1. Header Banner */}
+      <div className="bg-gradient-to-r from-cream-100 via-white to-cream-50 p-6 sm:p-10 rounded-3xl border border-cream-200/60 shadow-xs space-y-4">
+        <div className="max-w-2xl">
+          <span className="text-xs font-bold text-accent uppercase tracking-widest">
+            BookLoop Marketplace
+          </span>
+          <h1 className="text-3xl sm:text-4xl font-black text-primary tracking-tight mt-1">
+            Find the Book You Need
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-600 mt-1">
+            Search thousands of used textbooks, study materials, and novels listed by fellow college students.
+          </p>
+        </div>
 
-          {/* Quick search input */}
-          <div className="relative max-w-md w-full">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+        {/* Large Prominent Search Bar */}
+        <form onSubmit={handleSearchSubmit} className="relative max-w-3xl">
+          <div className="relative flex items-center shadow-soft rounded-2xl bg-white border border-slate-200 overflow-hidden focus-within:ring-3 focus-within:ring-accent/30 focus-within:border-accent transition-all">
+            <Search className="w-5 h-5 text-slate-400 absolute left-4 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search by title, author, or keyword..."
+              placeholder="Search by title, author, course subject, or ISBN..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
-                updateFilterParam('search', e.target.value);
+                setPage(1);
               }}
-              className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
+              className="w-full pl-12 pr-24 py-3.5 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 focus:outline-none"
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch('');
+                  setPage(1);
+                }}
+                className="p-1 mr-2 text-slate-400 hover:text-slate-600 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+            <button
+              type="submit"
+              className="mr-2 px-5 py-2 rounded-xl bg-primary hover:bg-primary-light text-white font-bold text-xs sm:text-sm transition-colors shadow-soft"
+            >
+              Search
+            </button>
           </div>
-        </div>
+        </form>
 
-        {/* Category Pills Slider */}
-        <div className="flex items-center gap-2 overflow-x-auto pt-6 pb-2 no-scrollbar">
+        {/* Category Pills (1-Click selection) */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-2 scrollbar-none">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => {
                 setCategory(cat);
-                updateFilterParam('category', cat);
+                setPage(1);
               }}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 ${
                 category === cat
-                  ? 'bg-primary text-white shadow-soft'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-primary text-white shadow-soft scale-105'
+                  : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
               }`}
             >
               {cat}
@@ -179,213 +220,221 @@ const ExplorePage = () => {
         </div>
       </div>
 
-      {/* Main Grid & Filters Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Desktop Sidebar Filters */}
-        <aside className="hidden lg:block space-y-6">
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-soft space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <span className="font-bold text-sm text-slate-900 flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-accent" /> Filters
-              </span>
+      {/* 2. Controls & Filter Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-soft">
+        {/* Listing Type Quick Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto">
+          {listingTypes.map((type) => (
+            <button
+              key={type.value}
+              onClick={() => {
+                setListingType(type.value);
+                setPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                listingType === type.value
+                  ? 'bg-accent text-white shadow-xs'
+                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              {type.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Right Sort & Filter Toggle */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-500 hidden sm:inline">Sort:</span>
+            <select
+              value={sort}
+              onChange={(e) => {
+                setSort(e.target.value);
+                setPage(1);
+              }}
+              className="text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-accent/40 text-slate-700 cursor-pointer"
+            >
+              <option value="latest">Latest First</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+              <option value="views">Most Viewed</option>
+              <option value="oldest">Oldest First</option>
+            </select>
+          </div>
+
+          <button
+            onClick={() => setShowFiltersPanel(!showFiltersPanel)}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
+              showFiltersPanel || hasActiveFilters
+                ? 'bg-primary text-white border-primary'
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+            }`}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span>More Filters</span>
+            {hasActiveFilters && (
+              <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* 3. Collapsible Advanced Filters Panel */}
+      {showFiltersPanel && (
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-soft-lg space-y-5 animate-in slide-in-from-top-3 duration-200">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Filter className="w-4 h-4 text-accent" />
+              <span>Refine Your Search</span>
+            </h3>
+            {hasActiveFilters && (
               <button
-                onClick={resetAllFilters}
-                className="text-xs text-rose-600 hover:underline font-semibold flex items-center gap-1"
+                onClick={handleResetFilters}
+                className="text-xs font-bold text-rose-500 hover:underline flex items-center gap-1"
               >
-                <RotateCcw className="w-3 h-3" /> Reset
+                <RotateCcw className="w-3.5 h-3.5" /> Reset All Filters
               </button>
-            </div>
+            )}
+          </div>
 
-            {/* Listing Type */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">
-                Listing Type
-              </label>
-              <div className="space-y-1.5">
-                {listingTypes.map((type) => (
-                  <label
-                    key={type}
-                    className="flex items-center justify-between p-2 rounded-xl text-xs font-medium cursor-pointer hover:bg-slate-50 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="listingType"
-                        checked={listingType === type}
-                        onChange={() => {
-                          setListingType(type);
-                          updateFilterParam('listingType', type);
-                        }}
-                        className="text-accent focus:ring-accent"
-                      />
-                      <span className={listingType === type ? 'font-bold text-slate-900' : 'text-slate-600'}>
-                        {type === 'Donate' ? 'Free Donation' : type}
-                      </span>
-                    </div>
-                  </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {/* Condition Filter */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Book Condition</label>
+              <select
+                value={condition}
+                onChange={(e) => {
+                  setCondition(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+              >
+                {conditions.map((c) => (
+                  <option key={c} value={c}>{c === 'All' ? 'All Conditions' : c}</option>
                 ))}
-              </div>
+              </select>
             </div>
 
-            {/* Condition */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">
-                Book Condition
-              </label>
-              <div className="space-y-1.5">
-                {conditions.map((cond) => (
-                  <label
-                    key={cond}
-                    className="flex items-center gap-2 p-2 rounded-xl text-xs font-medium cursor-pointer hover:bg-slate-50"
-                  >
-                    <input
-                      type="radio"
-                      name="condition"
-                      checked={condition === cond}
-                      onChange={() => {
-                        setCondition(cond);
-                        updateFilterParam('condition', cond);
-                      }}
-                      className="text-accent focus:ring-accent"
-                    />
-                    <span className={condition === cond ? 'font-bold text-slate-900' : 'text-slate-600'}>
-                      {cond}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Price Range */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">
-                Price Range ($)
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  placeholder="Min"
-                  value={minPrice}
-                  onChange={(e) => {
-                    setMinPrice(e.target.value);
-                    updateFilterParam('minPrice', e.target.value);
-                  }}
-                  className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none"
-                />
-                <span className="text-slate-400 text-xs">-</span>
-                <input
-                  type="number"
-                  placeholder="Max"
-                  value={maxPrice}
-                  onChange={(e) => {
-                    setMaxPrice(e.target.value);
-                    updateFilterParam('maxPrice', e.target.value);
-                  }}
-                  className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none"
-                />
-              </div>
-            </div>
-
-            {/* University / College Filter */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">
-                University Campus
-              </label>
+            {/* College Filter */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Campus / College</label>
               <select
                 value={college}
                 onChange={(e) => {
                   setCollege(e.target.value);
-                  updateFilterParam('college', e.target.value);
+                  setPage(1);
                 }}
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none text-slate-700"
+                className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
               >
-                {colleges.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
+                {colleges.map((col) => (
+                  <option key={col} value={col}>{col === 'All' ? 'All Campuses' : col}</option>
                 ))}
               </select>
             </div>
-          </div>
-        </aside>
 
-        {/* Books Results Column */}
-        <main className="lg:col-span-3 space-y-6">
-          {/* Top Sort Bar */}
-          <div className="bg-white px-5 py-3.5 rounded-2xl border border-slate-100 shadow-soft flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-700">
-              {total} {total === 1 ? 'Book' : 'Books'} Found
-            </span>
-
-            <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-              <span className="hidden sm:inline">Sort by:</span>
-              <select
-                value={sort}
-                onChange={(e) => {
-                  setSort(e.target.value);
-                  updateFilterParam('sort', e.target.value);
-                }}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-bold text-slate-800 focus:outline-none text-xs"
-              >
-                <option value="latest">Latest Additions</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-                <option value="views">Most Viewed</option>
-                <option value="oldest">Oldest First</option>
-              </select>
+            {/* Price Range Filter */}
+            <div className="space-y-1.5 lg:col-span-2">
+              <label className="text-xs font-bold text-slate-700">Price Range ($)</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  placeholder="Min ($)"
+                  value={minPrice}
+                  onChange={(e) => {
+                    setMinPrice(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+                />
+                <span className="text-slate-400 font-bold">-</span>
+                <input
+                  type="number"
+                  placeholder="Max ($)"
+                  value={maxPrice}
+                  onChange={(e) => {
+                    setMaxPrice(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+                />
+              </div>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Book Cards Grid */}
-          {loading ? (
-            <BookGridSkeleton count={9} />
-          ) : books.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {books.map((book) => (
-                <BookCard key={book._id} book={book} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              title="No books match your criteria"
-              description="Be the first to list a textbook under this search or reset your filters."
-              actionLabel="Add Your First Book"
-              actionLink="/add-book"
-            />
-          )}
-
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-8">
-              <button
-                disabled={page <= 1}
-                onClick={() => {
-                  setPage((p) => Math.max(1, p - 1));
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              <span className="text-xs font-bold text-slate-700 px-4">
-                Page {page} of {totalPages}
-              </span>
-
-              <button
-                disabled={page >= totalPages}
-                onClick={() => {
-                  setPage((p) => Math.min(totalPages, p + 1));
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-        </main>
+      {/* 4. Active Results Count Bar */}
+      <div className="flex items-center justify-between text-xs text-slate-500 font-medium px-1">
+        <span>
+          Showing <strong className="text-slate-800">{books.length}</strong> of{' '}
+          <strong className="text-slate-800">{total}</strong> books available
+        </span>
+        {hasActiveFilters && (
+          <button
+            onClick={handleResetFilters}
+            className="text-accent font-bold hover:underline"
+          >
+            Clear Active Filters
+          </button>
+        )}
       </div>
+
+      {/* 5. Books Grid */}
+      {loading ? (
+        <BookGridSkeleton count={8} />
+      ) : books.length === 0 ? (
+        <EmptyState
+          title="Oops! No books found"
+          message="Try another search keyword, reset your price filter, or explore different categories."
+          actionText={hasActiveFilters ? 'Clear All Filters' : 'Add Your First Book'}
+          onAction={hasActiveFilters ? handleResetFilters : undefined}
+          actionLink={hasActiveFilters ? undefined : '/add-book'}
+        />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {books.map((book) => (
+            <BookCard key={book._id} book={book} />
+          ))}
+        </div>
+      )}
+
+      {/* 6. Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-6">
+          <button
+            disabled={page <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            className="p-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          {[...Array(totalPages)].map((_, i) => {
+            const pageNum = i + 1;
+            return (
+              <button
+                key={pageNum}
+                onClick={() => setPage(pageNum)}
+                className={`w-10 h-10 rounded-xl text-xs font-bold transition-all ${
+                  page === pageNum
+                    ? 'bg-primary text-white shadow-soft scale-105'
+                    : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                {pageNum}
+              </button>
+            );
+          })}
+
+          <button
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            className="p-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

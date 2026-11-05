@@ -4,18 +4,20 @@ import {
   BookOpen,
   Search,
   ArrowRight,
-  RefreshCw,
+  ArrowRightLeft,
   DollarSign,
-  ShieldCheck,
+  Gift,
+  PlusCircle,
   Sparkles,
   TreePine,
   CheckCircle2,
   Users,
   MapPin,
-  Gift,
   Star,
-  PlusCircle,
-  BookX
+  ShieldCheck,
+  ChevronRight,
+  HeartHandshake,
+  GraduationCap
 } from 'lucide-react';
 import api from '../services/api';
 import BookCard from '../components/BookCard';
@@ -39,7 +41,6 @@ const LandingPage = () => {
         ]);
 
         if (featuredRes.data.success) {
-          // If no specific featured flags are set, take first 4 books as featured
           if (featuredRes.data.books && featuredRes.data.books.length > 0) {
             setFeaturedBooks(featuredRes.data.books);
           } else if (recentRes.data.books && recentRes.data.books.length > 0) {
@@ -70,66 +71,99 @@ const LandingPage = () => {
   };
 
   const categories = [
-    { name: 'Computer Science', icon: '💻', count: 'Algorithms & Systems' },
-    { name: 'Programming', icon: '⚡', count: 'Clean Code, Python, Web' },
-    { name: 'Data Structures and Algorithms', icon: '🌳', count: 'CLRS, LeetCode, Java' },
-    { name: 'Artificial Intelligence', icon: '🤖', count: 'Deep Learning & ML' },
-    { name: 'Mathematics', icon: '📐', count: 'Calculus, Linear Algebra' },
-    { name: 'Science', icon: '🔬', count: 'Physics, Chemistry, Bio' },
-    { name: 'Novels', icon: '📖', count: 'Classic & Modern Fiction' },
-    { name: 'Competitive Examination Preparation', icon: '🎯', count: 'GRE, TOEFL, MCAT' }
+    {
+      name: 'Programming',
+      query: 'Programming',
+      icon: '💻',
+      desc: 'Python, Clean Code & Web Dev'
+    },
+    {
+      name: 'Computer Science',
+      query: 'Computer Science',
+      icon: '⚡',
+      desc: 'Operating Systems & Networks'
+    },
+    {
+      name: 'Data Structures',
+      query: 'Data Structures and Algorithms',
+      icon: '🌳',
+      desc: 'CLRS, LeetCode & Algorithms'
+    },
+    {
+      name: 'Artificial Intelligence',
+      query: 'Artificial Intelligence',
+      icon: '🤖',
+      desc: 'Machine Learning & Deep Learning'
+    },
+    {
+      name: 'Mathematics',
+      query: 'Mathematics',
+      icon: '📐',
+      desc: 'Calculus & Linear Algebra'
+    },
+    {
+      name: 'Science',
+      query: 'Science',
+      icon: '🔬',
+      desc: 'Physics, Chemistry & Biology'
+    },
+    {
+      name: 'Novels',
+      query: 'Novels',
+      icon: '📖',
+      desc: 'Classic & Modern Literature'
+    },
+    {
+      name: 'Competitive Exams',
+      query: 'Competitive Examination Preparation',
+      icon: '🎯',
+      desc: 'GRE, GMAT, MCAT & SAT'
+    }
   ];
 
-  const stats = [
-    { label: 'Sample & Student Books', value: '24+', icon: BookOpen },
-    { label: 'Estimated Savings', value: '$45,000+', icon: DollarSign },
-    { label: 'Successful Swaps', value: '480+', icon: RefreshCw },
-    { label: 'Campus Communities', value: '18+', icon: Users }
-  ];
-
-  const howItWorks = [
+  const whyBookLoop = [
     {
-      step: '01',
-      title: 'List Your Used Books',
-      description: 'Snap a photo, pick your price or choose trade/donation, and list in under 60 seconds.'
+      icon: DollarSign,
+      title: 'Save Money',
+      description: 'Get required course textbooks for up to 80% less than new bookstore retail prices.'
     },
     {
-      step: '02',
-      title: 'Find What You Need',
-      description: 'Filter by college, subject, course code, condition, and price to find textbooks nearby.'
+      icon: ArrowRightLeft,
+      title: 'Exchange Knowledge',
+      description: 'Swap textbooks you have finished with classmates who have the books you need next.'
     },
     {
-      step: '03',
-      title: 'Swap or Buy Locally',
-      description: 'Chat directly with fellow campus students to agree on an exchange or convenient meetup.'
+      icon: TreePine,
+      title: 'Reduce Book Waste',
+      description: 'Give physical books a continuous second life and minimize paper and environmental waste.'
     },
     {
-      step: '04',
-      title: 'Save Money & Planet',
-      description: 'Cut textbook costs by up to 80% while saving trees and building campus friendships.'
+      icon: Users,
+      title: 'Connect with Students',
+      description: 'Meet verified peers across your campus library and build a helpful learning community.'
     }
   ];
 
   const testimonials = [
     {
-      name: 'Elena Rostova',
-      college: 'UC Berkeley, Class of 2025',
-      image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-      text: 'I saved over $350 this semester alone by exchanging my Organic Chemistry notes and textbook for Molecular Biology. BookLoop made campus meetups so effortless!',
+      name: 'Samantha Lee',
+      college: 'UC Berkeley, Class of 2026',
+      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80',
+      text: 'I traded my Organic Chemistry book for Campbell Biology in less than 24 hours. The exchange process is straightforward and zero hassle!',
       rating: 5
     },
     {
-      name: 'David Chen',
-      college: 'Stanford University, CS Sophomore',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-      text: 'Traded my Algorithms textbook for Distributed Systems in 2 days. The exchange request workflow was completely seamless.',
+      name: 'Alex Rivera',
+      college: 'Stanford University, CS Major',
+      image: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+      text: 'Finding affordable algorithms textbooks on campus used to be frustrating. BookLoop connected me with a senior selling CLRS in like-new condition.',
       rating: 5
     },
     {
-      name: 'Maya Patel',
+      name: 'Marcus Johnson',
       college: 'Columbia University, Economics',
-      image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80',
-      text: 'I love the free donation section! Graduating seniors donate their prep manuals and literature books to freshmen. An incredible community initiative.',
+      image: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=200&q=80',
+      text: 'The free book donation section is incredible. Senior students pass down their MCAT and GRE study sets to juniors at no cost.',
       rating: 5
     }
   ];
@@ -137,95 +171,297 @@ const LandingPage = () => {
   return (
     <div className="space-y-20 pb-16">
       {/* 1. Hero Section */}
-      <section className="relative overflow-hidden pt-12 pb-20 bg-gradient-to-b from-cream-100/60 via-background to-background">
+      <section className="relative overflow-hidden pt-12 pb-20 bg-gradient-to-b from-cream-100/70 via-background to-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto space-y-6">
             {/* Campus Badge */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-slate-200 shadow-xs text-xs font-bold text-primary">
               <Sparkles className="w-4 h-4 text-accent" />
-              <span>Smart Student Book Exchange & Marketplace</span>
+              <span>Campus Book Exchange & Student Marketplace</span>
             </div>
 
-            {/* Headline */}
+            {/* Main Heading */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-primary tracking-tight leading-[1.15]">
-              Give Books a Second Life. <br className="hidden sm:inline" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent to-accent-hover font-serif italic">
-                Read More. Spend Less.
+              Your Next Favorite Book <br />
+              <span className="text-accent underline decoration-cream-200 underline-offset-8">
+                Is Waiting!
               </span>
             </h1>
 
-            {/* Tagline description */}
-            <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-medium">
-              Join thousands of college students exchanging, buying, and donating pre-owned course
-              textbooks. Keep educational expenses low, reduce paper waste, and share knowledge.
+            {/* Subheading */}
+            <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+              Discover affordable books, exchange your old favorites, and give every book a second life.
             </p>
 
-            {/* Big Search Bar */}
-            <form
-              onSubmit={handleHeroSearch}
-              className="max-w-2xl mx-auto bg-white p-2 sm:p-2.5 rounded-2xl shadow-soft-lg border border-slate-200/80 flex flex-col sm:flex-row items-center gap-2"
-            >
-              <div className="flex items-center gap-3 w-full px-3 py-1">
-                <Search className="w-5 h-5 text-slate-400 flex-shrink-0" />
+            {/* Prominent Search Bar */}
+            <form onSubmit={handleHeroSearch} className="relative max-w-2xl mx-auto pt-2">
+              <div className="relative flex items-center shadow-soft-lg rounded-2xl bg-white border border-slate-200 overflow-hidden focus-within:ring-4 focus-within:ring-accent/30 focus-within:border-accent transition-all">
+                <Search className="w-5 h-5 text-slate-400 absolute left-4 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Search by title, author, course, or ISBN..."
+                  placeholder="Search by book title, author, or subject..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
+                  className="w-full pl-12 pr-32 py-4 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 focus:outline-none"
                 />
+                <button
+                  type="submit"
+                  className="absolute right-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-light text-white font-bold text-xs sm:text-sm transition-all duration-200 shadow-soft"
+                >
+                  Find Books
+                </button>
               </div>
-              <button
-                type="submit"
-                className="w-full sm:w-auto px-7 py-3 rounded-xl bg-primary hover:bg-primary-light text-white font-bold text-sm transition-all shadow-soft flex items-center justify-center gap-2 flex-shrink-0"
-              >
-                <span>Find Books</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
             </form>
 
-            {/* Action buttons */}
-            <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+            {/* Three Prominent Action Buttons */}
+            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 pt-3">
               <Link
                 to="/explore"
-                className="px-6 py-3 rounded-xl bg-accent hover:bg-accent-hover text-white text-sm font-bold shadow-soft transition-all transform hover:-translate-y-0.5"
+                className="px-6 py-3.5 rounded-2xl bg-primary hover:bg-primary-light text-white font-bold text-sm shadow-soft hover:shadow-soft-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2"
               >
-                Explore All Books
+                <BookOpen className="w-4 h-4 text-accent" />
+                <span>Explore Books</span>
               </Link>
               <Link
                 to="/add-book"
-                className="px-6 py-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-sm font-bold shadow-xs transition-all"
+                className="px-6 py-3.5 rounded-2xl bg-accent hover:bg-accent-hover text-white font-bold text-sm shadow-soft hover:shadow-soft-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2"
               >
-                + List Your Book Free
+                <PlusCircle className="w-4 h-4" />
+                <span>Sell Your Books</span>
               </Link>
               <Link
-                to="/donations"
-                className="px-6 py-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-sm font-bold transition-all flex items-center gap-2"
+                to="/exchange"
+                className="px-6 py-3.5 rounded-2xl bg-white hover:bg-cream-50 text-primary border border-slate-200 font-bold text-sm shadow-soft hover:shadow-soft-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2"
               >
-                <Gift className="w-4 h-4 text-emerald-600" />
-                <span>Free Donations</span>
+                <ArrowRightLeft className="w-4 h-4 text-purple-600" />
+                <span>Exchange Books</span>
               </Link>
             </div>
+
+            {/* Quick Hero Banner Proof */}
+            <div className="pt-6 flex flex-wrap items-center justify-center gap-6 text-xs font-semibold text-slate-500">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Zero Listing Fees
+              </span>
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-primary" /> Verified Student Accounts
+              </span>
+              <span className="flex items-center gap-1.5">
+                <GraduationCap className="w-4 h-4 text-accent" /> Convenient Campus Meetups
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Ambient Decorative Background elements */}
+        <div className="absolute top-1/2 left-0 w-80 h-80 bg-accent/15 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/3 pointer-events-none" />
+        <div className="absolute top-1/3 right-0 w-80 h-80 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+      </section>
+
+      {/* 2. How It Works Section */}
+      <section id="how-it-works" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-24">
+        <div className="bg-white rounded-3xl p-8 sm:p-14 border border-slate-100 shadow-soft space-y-10">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <span className="text-xs font-bold uppercase tracking-widest text-accent">
+              Simple 3-Step Process
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              How BookLoop Works
+            </h2>
+            <p className="text-sm text-slate-600">
+              No complicated steps. Anyone can buy, trade, or share books in minutes.
+            </p>
           </div>
 
-          {/* Stats strip */}
-          <div className="mt-16 grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
-            {stats.map((item, idx) => {
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            {/* Step 1 */}
+            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-cream-50/60 border border-cream-200/50 space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-primary text-accent flex items-center justify-center shadow-soft">
+                <Search className="w-8 h-8" />
+              </div>
+              <span className="text-xs font-black uppercase text-accent tracking-wider">
+                STEP 1 – FIND A BOOK
+              </span>
+              <h3 className="text-xl font-bold text-slate-900">Search Books You Love</h3>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                "Search for books you love or need." Explore textbooks, study guides, and novels listed by fellow campus peers.
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-cream-50/60 border border-cream-200/50 space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-accent text-white flex items-center justify-center shadow-soft">
+                <ArrowRightLeft className="w-8 h-8" />
+              </div>
+              <span className="text-xs font-black uppercase text-primary tracking-wider">
+                STEP 2 – CHOOSE YOUR OPTION
+              </span>
+              <h3 className="text-xl font-bold text-slate-900">Buy, Swap, or Request Free</h3>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                "Buy it, exchange it, or request a free donated book." Choose whatever fits your budget and study needs best.
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex flex-col items-center text-center p-6 rounded-2xl bg-cream-50/60 border border-cream-200/50 space-y-4">
+              <div className="w-16 h-16 rounded-2xl bg-primary-light text-white flex items-center justify-center shadow-soft">
+                <HeartHandshake className="w-8 h-8 text-accent" />
+              </div>
+              <span className="text-xs font-black uppercase text-accent tracking-wider">
+                STEP 3 – CONNECT AND READ
+              </span>
+              <h3 className="text-xl font-bold text-slate-900">Connect with the Owner</h3>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                "Connect with the owner and get your book." Chat safely, coordinate a campus library meetup, and enjoy reading!
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Featured Books Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-widest text-accent">
+              Editor's Handpicked Selection
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              Popular Books for You
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1">
+              Top-rated textbooks and popular reads available on campus right now.
+            </p>
+          </div>
+          <Link
+            to="/explore"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-primary hover:text-accent transition-colors"
+          >
+            <span>See All Books</span>
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        {loading ? (
+          <BookGridSkeleton count={4} />
+        ) : featuredBooks.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featuredBooks.slice(0, 4).map((book) => (
+              <BookCard key={book._id} book={book} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title="No featured books right now"
+            message="Check back soon or explore our freshly added catalog!"
+            actionText="Explore All Books"
+            actionLink="/explore"
+          />
+        )}
+      </section>
+
+      {/* 4. Categories Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="text-center max-w-xl mx-auto space-y-2">
+          <span className="text-xs font-bold uppercase tracking-widest text-accent">
+            Curated Collections
+          </span>
+          <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            Browse by Category
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600">
+            Click any category to instantly explore matched textbooks and literature.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          {categories.map((cat) => (
+            <Link
+              key={cat.name}
+              to={`/explore?category=${encodeURIComponent(cat.query)}`}
+              className="group p-5 rounded-2xl bg-white border border-slate-100 shadow-soft hover:shadow-card-hover hover:border-accent/40 transition-all duration-300 flex flex-col items-center text-center space-y-2"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-cream-50 group-hover:bg-accent/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
+                {cat.icon}
+              </div>
+              <h3 className="font-bold text-sm sm:text-base text-slate-900 group-hover:text-primary transition-colors">
+                {cat.name}
+              </h3>
+              <p className="text-[11px] text-slate-500 line-clamp-1">{cat.desc}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* 5. Recently Added Books Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-widest text-emerald-600">
+              Live Campus Listings
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              Freshly Added Books
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1">
+              Newly uploaded books by students and campus community members.
+            </p>
+          </div>
+          <Link
+            to="/explore?sort=latest"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-primary hover:text-accent transition-colors"
+          >
+            <span>View Latest Additions</span>
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        {loading ? (
+          <BookGridSkeleton count={8} />
+        ) : recentBooks.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {recentBooks.slice(0, 8).map((book) => (
+              <BookCard key={book._id} book={book} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title="No recent books found"
+            message="Be the first to list a book and share knowledge with fellow students!"
+            actionText="Add Your First Book"
+            actionLink="/add-book"
+          />
+        )}
+      </section>
+
+      {/* 6. Why BookLoop Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-gradient-to-br from-primary to-primary-dark rounded-3xl p-8 sm:p-14 text-white shadow-soft-lg space-y-10">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <span className="text-xs font-bold uppercase tracking-widest text-accent">
+              Our Student-First Mission
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
+              Why BookLoop?
+            </h2>
+            <p className="text-slate-300 text-sm">
+              Built by students, for students. Here is how BookLoop makes campus life better.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {whyBookLoop.map((item) => {
               const Icon = item.icon;
               return (
                 <div
-                  key={idx}
-                  className="bg-white/80 backdrop-blur-md rounded-2xl p-5 border border-slate-100 shadow-soft text-center flex flex-col items-center justify-center"
+                  key={item.title}
+                  className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs space-y-3 hover:bg-white/10 transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-cream-100 text-accent flex items-center justify-center mb-2">
-                    <Icon className="w-5 h-5" />
+                  <div className="w-12 h-12 rounded-xl bg-accent text-white flex items-center justify-center font-bold shadow-soft">
+                    <Icon className="w-6 h-6" />
                   </div>
-                  <span className="text-2xl sm:text-3xl font-black text-primary tracking-tight">
-                    {item.value}
-                  </span>
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-0.5">
-                    {item.label}
-                  </span>
+                  <h4 className="text-lg font-bold text-white">{item.title}</h4>
+                  <p className="text-xs text-slate-300 leading-relaxed">{item.description}</p>
                 </div>
               );
             })}
@@ -233,310 +469,43 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* 2. Popular Academic Categories */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
-          <div>
-            <span className="text-xs font-bold text-accent uppercase tracking-wider">
-              Browse by Subject
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-primary tracking-tight mt-1">
-              Popular Academic Categories
-            </h2>
-          </div>
-          <Link
-            to="/explore"
-            className="text-sm font-bold text-primary hover:text-accent flex items-center gap-1 group"
-          >
-            <span>View all in catalog</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {categories.map((cat, i) => (
-            <Link
-              key={i}
-              to={`/explore?category=${encodeURIComponent(cat.name)}`}
-              className="bg-white p-5 rounded-2xl border border-slate-100 shadow-soft hover:shadow-soft-lg hover:-translate-y-1 transition-all text-left flex items-start gap-4 group"
-            >
-              <div className="text-3xl group-hover:scale-110 transition-transform flex-shrink-0">
-                {cat.icon}
-              </div>
-              <div>
-                <h4 className="font-bold text-sm text-slate-900 group-hover:text-primary transition-colors line-clamp-1">
-                  {cat.name}
-                </h4>
-                <p className="text-[11px] text-slate-400 mt-1 line-clamp-1">{cat.count}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* 3. Featured Books Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 text-xs font-extrabold rounded-md bg-accent/20 text-accent">
-                HANDPICKED
-              </span>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Campus Highlights
-              </span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-primary tracking-tight mt-1">
-              Featured Books
-            </h2>
-          </div>
-          <Link
-            to="/explore?featured=true"
-            className="text-sm font-bold text-primary hover:text-accent flex items-center gap-1 group"
-          >
-            <span>Explore all featured</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </div>
-
-        {loading ? (
-          <BookGridSkeleton count={4} />
-        ) : featuredBooks.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {featuredBooks.map((book) => (
-              <BookCard key={book._id} book={book} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            title="No featured books at the moment"
-            description="Be the first to list a textbook on your campus!"
-            actionLabel="Add Your First Book"
-            actionLink="/add-book"
-          />
-        )}
-      </section>
-
-      {/* 4. Recently Added Books Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
-          <div>
-            <span className="text-xs font-bold text-accent uppercase tracking-wider">
-              Fresh From Campus
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-primary tracking-tight mt-1">
-              Recently Added Books
-            </h2>
-          </div>
-          <Link
-            to="/explore"
-            className="text-sm font-bold text-primary hover:text-accent flex items-center gap-1 group"
-          >
-            <span>See all listings</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </div>
-
-        {loading ? (
-          <BookGridSkeleton count={8} />
-        ) : recentBooks.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {recentBooks.map((book) => (
-              <BookCard key={book._id} book={book} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            title="No books available yet"
-            description="Start building your campus sharing circle by adding the first textbook."
-            actionLabel="Add Your First Book"
-            actionLink="/add-book"
-          />
-        )}
-      </section>
-
-      {/* 5. How BookLoop Works */}
-      <section id="how-it-works" className="bg-primary text-white py-20 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <span className="text-xs font-bold text-accent uppercase tracking-wider">
-              Simple 4-Step Process
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
-              How BookLoop Works
-            </h2>
-            <p className="text-sm text-slate-300">
-              Designed by students for students. Trade, buy, or gift textbooks right inside your university campus.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {howItWorks.map((step, idx) => (
-              <div
-                key={idx}
-                className="bg-primary-light/50 border border-primary-light/80 rounded-2xl p-6 relative flex flex-col justify-between"
-              >
-                <div>
-                  <div className="text-3xl font-black text-accent/80 font-serif mb-4">
-                    {step.step}
-                  </div>
-                  <h3 className="text-lg font-bold text-white mb-2">{step.title}</h3>
-                  <p className="text-xs text-slate-300 leading-relaxed">{step.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-12 text-center">
-            <Link
-              to="/add-book"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-accent hover:bg-accent-hover text-white text-sm font-bold shadow-soft transition-all"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>List a Book Now</span>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. Benefits of Exchanging Books */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6">
-            <span className="text-xs font-bold text-accent uppercase tracking-wider">
-              Why Choose BookLoop
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-primary tracking-tight leading-tight">
-              Smarter Than Traditional Bookstores, <br />
-              Kinder to Your Student Budget.
-            </h2>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              University bookstore buybacks typically offer less than 15% of the original textbook
-              cost, only to resell it at an 80% markup. BookLoop eliminates the predatory middleman
-              and lets students deal directly with each other.
-            </p>
-
-            <div className="space-y-4 pt-2">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <DollarSign className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-sm text-slate-900">Drastically Lower Textbook Bills</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Swap books 1-to-1 for zero dollars, or purchase at fair second-hand student prices.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <TreePine className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-sm text-slate-900">Eco-Friendly & Sustainable</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Every reused textbook saves approximately 30 liters of water and prevents tree harvesting.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-sm text-slate-900">Safe Campus Connections</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Meet directly at your campus library or student center — no shipping fees or waiting for delivery.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Visual Showcase Card */}
-          <div className="bg-gradient-to-tr from-cream-200 to-cream-50 p-8 rounded-3xl border border-cream-200 shadow-soft space-y-6">
-            <div className="flex items-center justify-between border-b border-amber-200/60 pb-4">
-              <span className="text-xs font-bold text-amber-900 uppercase">BookLoop Impact Metric</span>
-              <span className="text-xs font-extrabold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                Live Data
-              </span>
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-white p-4 rounded-xl shadow-xs border border-slate-100 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-slate-500 font-medium">Average Student Savings per Year</p>
-                  <p className="text-2xl font-black text-primary mt-0.5">$680.00</p>
-                </div>
-                <div className="text-2xl">💰</div>
-              </div>
-
-              <div className="bg-white p-4 rounded-xl shadow-xs border border-slate-100 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-slate-500 font-medium">Trees Saved From Textbook Reuse</p>
-                  <p className="text-2xl font-black text-emerald-600 mt-0.5">240+ Trees</p>
-                </div>
-                <div className="text-2xl">🌲</div>
-              </div>
-
-              <div className="bg-white p-4 rounded-xl shadow-xs border border-slate-100 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-slate-500 font-medium">Free Book Donations Gifted</p>
-                  <p className="text-2xl font-black text-accent mt-0.5">180+ Books</p>
-                </div>
-                <div className="text-2xl">🎁</div>
-              </div>
-            </div>
-
-            <Link
-              to="/donations"
-              className="w-full py-3 rounded-xl bg-primary text-white text-xs font-bold text-center block hover:bg-primary-light transition-colors"
-            >
-              Explore Free Student Donations →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* 7. Student Testimonials */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <span className="text-xs font-bold text-accent uppercase tracking-wider">
-            Voices From Campus
+      {/* 7. Community Testimonials */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="text-center max-w-xl mx-auto space-y-2">
+          <span className="text-xs font-bold uppercase tracking-widest text-accent">
+            Student Stories
           </span>
-          <h2 className="text-2xl sm:text-3xl font-black text-primary tracking-tight mt-1">
-            Loved by Students Across Universities
+          <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            Loved by Campus Book Swappers
           </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((t, i) => (
+          {testimonials.map((t) => (
             <div
-              key={i}
-              className="bg-white p-6 rounded-2xl border border-slate-100 shadow-soft flex flex-col justify-between"
+              key={t.name}
+              className="bg-white p-6 rounded-2xl border border-slate-100 shadow-soft space-y-4 flex flex-col justify-between"
             >
-              <div>
-                <div className="flex items-center gap-1 text-amber-400 mb-4">
-                  {Array.from({ length: t.rating }).map((_, idx) => (
-                    <Star key={idx} className="w-4 h-4 fill-current" />
+              <div className="space-y-3">
+                <div className="flex items-center gap-1 text-amber-400">
+                  {[...Array(t.rating)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-current" />
                   ))}
                 </div>
-                <p className="text-xs sm:text-sm text-slate-600 italic leading-relaxed">
+                <p className="text-xs sm:text-sm text-slate-700 italic leading-relaxed">
                   "{t.text}"
                 </p>
               </div>
 
-              <div className="flex items-center gap-3 pt-6 mt-6 border-t border-slate-100">
+              <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
                 <img
                   src={t.image}
                   alt={t.name}
                   className="w-10 h-10 rounded-full object-cover border border-slate-200"
                 />
                 <div>
-                  <h4 className="font-bold text-xs text-slate-900">{t.name}</h4>
-                  <p className="text-[11px] text-slate-400">{t.college}</p>
+                  <h5 className="font-bold text-xs sm:text-sm text-slate-900">{t.name}</h5>
+                  <p className="text-[11px] text-slate-500">{t.college}</p>
                 </div>
               </div>
             </div>
@@ -544,34 +513,28 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* 8. Call To Action Banner */}
+      {/* 8. Bottom CTA Banner */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gradient-to-r from-primary to-primary-light rounded-3xl p-8 sm:p-14 text-white relative overflow-hidden shadow-xl">
-          <div className="max-w-2xl space-y-4 relative z-10">
-            <span className="text-xs font-bold text-accent uppercase tracking-widest">
-              Join The Student Circle
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
-              Have books sitting on your shelf? <br />
-              Turn them into cash or your next textbook.
-            </h2>
-            <p className="text-sm text-slate-300">
-              List in under a minute. Connect with fellow students at your university and start swapping today.
-            </p>
-            <div className="flex flex-wrap items-center gap-3 pt-4">
-              <Link
-                to="/add-book"
-                className="px-6 py-3 rounded-xl bg-accent hover:bg-accent-hover text-white text-sm font-bold shadow-soft transition-all"
-              >
-                List a Book Now
-              </Link>
-              <Link
-                to="/explore"
-                className="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-bold transition-all"
-              >
-                Browse Books
-              </Link>
-            </div>
+        <div className="bg-cream-100 border border-cream-200 rounded-3xl p-8 sm:p-12 text-center max-w-4xl mx-auto space-y-6">
+          <h2 className="text-2xl sm:text-4xl font-black text-primary tracking-tight">
+            Ready to Give Your Books a Second Life?
+          </h2>
+          <p className="text-sm text-slate-600 max-w-xl mx-auto">
+            Join thousands of college students exchanging, selling, and donating textbooks today.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <Link
+              to="/add-book"
+              className="px-6 py-3 rounded-2xl bg-accent hover:bg-accent-hover text-white text-sm font-bold shadow-soft transition-all"
+            >
+              Sell or Share a Book Now
+            </Link>
+            <Link
+              to="/explore"
+              className="px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-800 text-sm font-bold hover:bg-slate-50 transition-all"
+            >
+              Explore Available Books
+            </Link>
           </div>
         </div>
       </section>

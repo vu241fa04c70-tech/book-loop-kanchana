@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import {
-  BookPlus,
   Upload,
-  ArrowRight,
-  Sparkles,
-  Info,
+  BookOpen,
   DollarSign,
   ArrowRightLeft,
   Gift,
+  MapPin,
+  CheckCircle2,
+  Sparkles,
+  Info,
   Trash2,
-  Image as ImageIcon
+  Image as ImageIcon,
+  ArrowRight
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -34,33 +36,34 @@ const AddBookPage = () => {
     description: '',
     category: 'Computer Science',
     subject: '',
-    condition: 'Good',
+    condition: 'Like New',
     price: '',
     originalPrice: '',
     listingType: 'Sell',
     college: user?.college || 'Stanford University',
-    location: user?.location || 'Campus Center',
+    location: user?.location || 'Main Campus Library',
     images: []
   });
 
   const [imageUrlInput, setImageUrlInput] = useState('');
 
   const categories = [
+    'Programming',
     'Computer Science',
-    'Engineering',
-    'Medicine & Health',
-    'Business & Economics',
-    'Law',
-    'Sciences',
+    'Data Structures and Algorithms',
+    'Artificial Intelligence',
     'Mathematics',
-    'Literature & Fiction',
-    'Social Sciences',
-    'Exam Preparation',
-    'General Non-Fiction',
-    'Other'
+    'Science',
+    'Novels',
+    'Competitive Examination Preparation'
   ];
 
-  const conditions = ['Like New', 'Good', 'Fair', 'Poor'];
+  const conditions = [
+    { label: 'Like New', desc: 'No marks, clean pages, pristine cover' },
+    { label: 'Good', desc: 'Minor wear, no missing pages' },
+    { label: 'Fair', desc: 'Noticeable wear, highlighted text' },
+    { label: 'Poor', desc: 'Heavy wear, functional and readable' }
+  ];
 
   // Load existing book data if editing
   useEffect(() => {
@@ -78,7 +81,7 @@ const AddBookPage = () => {
               category: b.category,
               subject: b.subject || '',
               condition: b.condition,
-              price: b.price || '',
+              price: b.price !== undefined ? b.price : '',
               originalPrice: b.originalPrice || '',
               listingType: b.listingType,
               college: b.college,
@@ -105,7 +108,7 @@ const AddBookPage = () => {
     }));
   };
 
-  // Handle local image file upload via backend /api/books/upload
+  // Upload image file
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -126,48 +129,62 @@ const AddBookPage = () => {
         showToast('Image uploaded successfully!', 'success');
       }
     } catch (err) {
-      // If local upload has issue, user can use URL
-      showToast('Could not upload file directly. You can also paste an image URL.', 'error');
+      showToast('Image upload failed. You can also paste an image URL.', 'error');
     } finally {
       setUploadingImage(false);
     }
   };
 
-  // Add image by URL
-  const handleAddImageUrl = (e) => {
-    e.preventDefault();
+  // Add image via URL
+  const handleAddImageUrl = () => {
     if (imageUrlInput.trim()) {
       setFormData((prev) => ({
         ...prev,
         images: [...prev.images, imageUrlInput.trim()]
       }));
       setImageUrlInput('');
+      showToast('Image URL added!', 'success');
     }
   };
 
-  const handleRemoveImage = (index) => {
+  const handleRemoveImage = (indexToRemove) => {
     setFormData((prev) => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      images: prev.images.filter((_, idx) => idx !== indexToRemove)
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.title.trim() || !formData.author.trim() || !formData.description.trim()) {
-      showToast('Please fill in title, author, and description', 'error');
+    if (!formData.title.trim()) {
+      showToast('Please enter a book title', 'error');
+      return;
+    }
+    if (!formData.author.trim()) {
+      showToast('Please enter the author name', 'error');
+      return;
+    }
+    if (!formData.description.trim()) {
+      showToast('Please enter a brief book description', 'error');
       return;
     }
 
+    // Default image if none provided
+    const submissionImages =
+      formData.images.length > 0
+        ? formData.images
+        : ['https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80'];
+
+    const payload = {
+      ...formData,
+      images: submissionImages,
+      price: formData.listingType === 'Donate' ? 0 : Number(formData.price) || 0,
+      originalPrice: Number(formData.originalPrice) || 0
+    };
+
     setSubmitting(true);
     try {
-      const payload = {
-        ...formData,
-        price: formData.listingType === 'Donate' ? 0 : Number(formData.price) || 0,
-        originalPrice: Number(formData.originalPrice) || 0
-      };
-
       if (isEditing) {
         const res = await api.put(`/books/${id}`, payload);
         if (res.data.success) {
@@ -177,7 +194,7 @@ const AddBookPage = () => {
       } else {
         const res = await api.post('/books', payload);
         if (res.data.success) {
-          showToast('Book listed successfully on BookLoop!', 'success');
+          showToast('Book published successfully to the marketplace!', 'success');
           navigate(`/books/${res.data.book._id}`);
         }
       }
@@ -189,363 +206,486 @@ const AddBookPage = () => {
     }
   };
 
+  const previewCover =
+    formData.images.length > 0
+      ? formData.images[0]
+      : 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80';
+
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto py-16 text-center">
-        <div className="w-10 h-10 border-4 border-primary border-t-accent rounded-full animate-spin mx-auto"></div>
-        <p className="mt-3 text-xs font-bold text-slate-500 uppercase tracking-wider">
-          Loading listing...
-        </p>
+      <div className="max-w-4xl mx-auto px-4 py-20 text-center space-y-4">
+        <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-sm font-semibold text-slate-600">Loading book details...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      {/* Header */}
-      <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-soft">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-accent/20 text-accent flex items-center justify-center">
-            <BookPlus className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-primary tracking-tight">
-              {isEditing ? 'Edit Book Listing' : 'List a Textbook on BookLoop'}
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-              Give your pre-owned course books a second life. Choose to sell, exchange, or donate for free.
-            </p>
-          </div>
-        </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+      {/* 1. Header Banner */}
+      <div className="bg-gradient-to-r from-cream-100 via-white to-cream-50 p-6 sm:p-10 rounded-3xl border border-cream-200/60 shadow-xs max-w-3xl">
+        <span className="text-xs font-bold text-accent uppercase tracking-widest">
+          {isEditing ? 'Update Listing' : 'Student Marketplace'}
+        </span>
+        <h1 className="text-3xl sm:text-4xl font-black text-primary tracking-tight mt-1">
+          {isEditing ? 'Edit Your Book Listing' : 'Give Your Book a New Home!'}
+        </h1>
+        <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+          Have books you no longer use? List them here and help another student while recovering your expenses.
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Section 1: Listing Intent */}
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-soft space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">
-            Step 1: Listing Intent & Category
-          </h3>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+        {/* Left: 5-Step Form (8 columns) */}
+        <form onSubmit={handleSubmit} className="lg:col-span-7 space-y-8">
+          {/* STEP 1: Upload Book Cover Image */}
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-soft space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-8 rounded-xl bg-primary text-accent flex items-center justify-center font-black text-sm">
+                1
+              </span>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">Book Cover Image</h3>
+                <p className="text-xs text-slate-500">Upload a clear photo of your book cover</p>
+              </div>
+            </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              { type: 'Sell', desc: 'Set a cash price for student buyers', icon: DollarSign },
-              { type: 'Exchange', desc: 'Trade for another textbook you need', icon: ArrowRightLeft },
-              { type: 'Donate', desc: 'Gift for free ($0) to help another student', icon: Gift }
-            ].map((option) => (
+            {/* Upload Zone */}
+            <div className="border-2 border-dashed border-slate-200 hover:border-accent/60 rounded-2xl p-6 text-center transition-colors bg-slate-50/50">
+              <input
+                type="file"
+                id="bookCoverUpload"
+                accept="image/*"
+                onChange={handleFileUpload}
+                disabled={uploadingImage}
+                className="hidden"
+              />
               <label
-                key={option.type}
-                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                  formData.listingType === option.type
-                    ? 'border-accent bg-amber-50/50 shadow-xs'
-                    : 'border-slate-200 hover:border-slate-300 bg-white'
-                }`}
+                htmlFor="bookCoverUpload"
+                className="cursor-pointer flex flex-col items-center space-y-2"
               >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-extrabold text-sm text-slate-900">{option.type}</span>
-                  <input
-                    type="radio"
-                    name="listingType"
-                    value={option.type}
-                    checked={formData.listingType === option.type}
-                    onChange={handleChange}
-                    className="text-accent focus:ring-accent"
-                  />
+                <div className="w-12 h-12 rounded-2xl bg-cream-100 text-accent flex items-center justify-center">
+                  <Upload className="w-6 h-6" />
                 </div>
-                <p className="text-xs text-slate-500">{option.desc}</p>
+                <span className="text-xs sm:text-sm font-bold text-primary">
+                  {uploadingImage ? 'Uploading photo...' : 'Click to Upload Cover Image'}
+                </span>
+                <span className="text-[11px] text-slate-400">PNG, JPG, or WEBP up to 5MB</span>
               </label>
-            ))}
-          </div>
+            </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Category *
-              </label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent font-medium text-slate-800"
+            {/* Alternative: Image URL Input */}
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="text"
+                placeholder="Or paste an image web link (URL)..."
+                value={imageUrlInput}
+                onChange={(e) => setImageUrlInput(e.target.value)}
+                className="flex-1 text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+              />
+              <button
+                type="button"
+                onClick={handleAddImageUrl}
+                className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
               >
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+                Add URL
+              </button>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Subject / Course Name
-              </label>
-              <input
-                type="text"
-                name="subject"
-                placeholder="e.g. CS106B, Algorithms, Organic Chem"
-                value={formData.subject}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Section 2: Book Details */}
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-soft space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">
-            Step 2: Book Information
-          </h3>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Book Title *
-              </label>
-              <input
-                type="text"
-                name="title"
-                required
-                placeholder="e.g. Introduction to Algorithms (4th Edition)"
-                value={formData.title}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent font-semibold"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Author(s) *
-                </label>
-                <input
-                  type="text"
-                  name="author"
-                  required
-                  placeholder="e.g. Cormen, Leiserson, Rivest, Stein"
-                  value={formData.author}
-                  onChange={handleChange}
-                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  ISBN (Optional)
-                </label>
-                <input
-                  type="text"
-                  name="ISBN"
-                  placeholder="e.g. 978-0262033848"
-                  value={formData.ISBN}
-                  onChange={handleChange}
-                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent font-mono"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Book Condition *
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {conditions.map((cond) => (
-                  <button
-                    key={cond}
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, condition: cond }))}
-                    className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all ${
-                      formData.condition === cond
-                        ? 'border-primary bg-primary text-white shadow-xs'
-                        : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    {cond}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Description & Notes *
-              </label>
-              <textarea
-                name="description"
-                required
-                rows="4"
-                placeholder="Mention highlighting, page condition, included companion discs/codes, or specific courses it was used for..."
-                value={formData.description}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
-              ></textarea>
-            </div>
-          </div>
-        </div>
-
-        {/* Section 3: Pricing & Campus Location */}
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-soft space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">
-            Step 3: Pricing & Campus Meetup
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                {formData.listingType === 'Donate' ? 'Price (Free Donation)' : 'Selling Price ($) *'}
-              </label>
-              <input
-                type="number"
-                name="price"
-                min="0"
-                step="0.5"
-                disabled={formData.listingType === 'Donate'}
-                placeholder={formData.listingType === 'Donate' ? '0 (Free)' : 'e.g. 25'}
-                value={formData.listingType === 'Donate' ? 0 : formData.price}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 text-sm font-bold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-60"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Original Retail Price ($)
-              </label>
-              <input
-                type="number"
-                name="originalPrice"
-                min="0"
-                step="0.5"
-                placeholder="e.g. 85 (helps calculate % saved)"
-                value={formData.originalPrice}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                University / College Campus *
-              </label>
-              <input
-                type="text"
-                name="college"
-                required
-                placeholder="e.g. Stanford University"
-                value={formData.college}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Campus Pickup Location *
-              </label>
-              <input
-                type="text"
-                name="location"
-                required
-                placeholder="e.g. Gates CS Building or Main Library"
-                value={formData.location}
-                onChange={handleChange}
-                className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Section 4: Images */}
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-soft space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">
-            Step 4: Book Photos
-          </h3>
-
-          <div className="space-y-4">
-            {/* File Upload Button */}
-            <div className="border-2 border-dashed border-slate-200 hover:border-accent p-6 rounded-2xl text-center transition-colors">
-              <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-              <p className="text-xs font-bold text-slate-700">
-                Upload cover photo from your computer or phone
-              </p>
-              <p className="text-[11px] text-slate-400 mt-0.5">PNG, JPG, WEBP up to 5MB</p>
-              <label className="inline-block mt-3 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl cursor-pointer transition-colors">
-                <span>{uploadingImage ? 'Uploading...' : 'Choose Photo'}</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                  disabled={uploadingImage}
-                  className="hidden"
-                />
-              </label>
-            </div>
-
-            {/* Paste URL alternative */}
-            <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">
-                Or paste image web link:
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/photo-..."
-                  value={imageUrlInput}
-                  onChange={(e) => setImageUrlInput(e.target.value)}
-                  className="flex-1 px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddImageUrl}
-                  className="px-4 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl"
-                >
-                  Add Link
-                </button>
-              </div>
-            </div>
-
-            {/* Image Preview List */}
+            {/* Image Thumbnails */}
             {formData.images.length > 0 && (
-              <div className="flex flex-wrap gap-3 pt-2">
-                {formData.images.map((img, i) => (
-                  <div
-                    key={i}
-                    className="relative w-20 h-24 rounded-xl overflow-hidden border border-slate-200 group shadow-xs"
-                  >
-                    <img src={img} alt="preview" className="w-full h-full object-cover" />
+              <div className="flex items-center gap-3 pt-2 overflow-x-auto">
+                {formData.images.map((img, idx) => (
+                  <div key={idx} className="relative group w-16 h-20 rounded-xl overflow-hidden border border-slate-200 shrink-0">
+                    <img src={img} alt="thumbnail" className="w-full h-full object-cover" />
                     <button
                       type="button"
-                      onClick={() => handleRemoveImage(i)}
-                      className="absolute inset-0 bg-slate-900/60 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                      onClick={() => handleRemoveImage(idx)}
+                      className="absolute inset-0 bg-slate-900/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      <Trash2 className="w-4 h-4 text-rose-400" />
+                      <Trash2 className="w-4 h-4 text-rose-300" />
                     </button>
                   </div>
                 ))}
               </div>
             )}
           </div>
-        </div>
 
-        {/* Submit Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4">
-          <Link
-            to={isEditing ? `/books/${id}` : '/explore'}
-            className="px-6 py-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="px-8 py-3.5 rounded-xl bg-accent hover:bg-accent-hover disabled:opacity-50 text-white text-sm font-bold shadow-soft transition-all transform hover:-translate-y-0.5"
-          >
-            {submitting ? 'Saving Book...' : isEditing ? 'Update Listing' : 'Publish Book Listing'}
-          </button>
+          {/* STEP 2: Enter Book Details */}
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-soft space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-8 rounded-xl bg-primary text-accent flex items-center justify-center font-black text-sm">
+                2
+              </span>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">Book Details</h3>
+                <p className="text-xs text-slate-500">Essential information to help students find it</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Book Title <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  placeholder="e.g. Operating System Concepts (10th Edition)"
+                  required
+                  className="w-full text-xs sm:text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    Author(s) <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="author"
+                    value={formData.author}
+                    onChange={handleChange}
+                    placeholder="e.g. Silberschatz, Galvin"
+                    required
+                    className="w-full text-xs sm:text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    Category <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    className="w-full text-xs sm:text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40 cursor-pointer"
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Description <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  name="description"
+                  rows={3}
+                  value={formData.description}
+                  onChange={handleChange}
+                  placeholder="Mention edition, highlighting, condition, or relevant course codes..."
+                  required
+                  className="w-full text-xs sm:text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+                />
+              </div>
+
+              {/* Book Condition Selectable Cards */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-700 uppercase">
+                  Book Condition
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {conditions.map((c) => (
+                    <button
+                      key={c.label}
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, condition: c.label }))}
+                      className={`p-3 rounded-xl border text-left transition-all ${
+                        formData.condition === c.label
+                          ? 'border-accent bg-accent/10 ring-2 ring-accent/30'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className="block text-xs font-bold text-slate-900">{c.label}</span>
+                      <span className="block text-[10px] text-slate-500 mt-0.5">{c.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* STEP 3: Select What You Want (Listing Type) */}
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-soft space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-8 rounded-xl bg-primary text-accent flex items-center justify-center font-black text-sm">
+                3
+              </span>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">Select What You Want</h3>
+                <p className="text-xs text-slate-500">Choose how other students can acquire your book</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Option 1: Sell my book */}
+              <div
+                onClick={() => setFormData((prev) => ({ ...prev, listingType: 'Sell' }))}
+                className={`p-4 rounded-2xl border cursor-pointer transition-all space-y-2 ${
+                  formData.listingType === 'Sell'
+                    ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-accent" />
+                </div>
+                <h4 className="font-bold text-sm text-slate-900">Sell my book</h4>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Set a fair price and recover your textbook costs.
+                </p>
+              </div>
+
+              {/* Option 2: Exchange my book */}
+              <div
+                onClick={() => setFormData((prev) => ({ ...prev, listingType: 'Exchange' }))}
+                className={`p-4 rounded-2xl border cursor-pointer transition-all space-y-2 ${
+                  formData.listingType === 'Exchange'
+                    ? 'border-purple-600 bg-purple-50 ring-2 ring-purple-200'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center">
+                  <ArrowRightLeft className="w-5 h-5" />
+                </div>
+                <h4 className="font-bold text-sm text-slate-900">Exchange my book</h4>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Swap with another student for a book you need.
+                </p>
+              </div>
+
+              {/* Option 3: Donate my book */}
+              <div
+                onClick={() => setFormData((prev) => ({ ...prev, listingType: 'Donate', price: 0 }))}
+                className={`p-4 rounded-2xl border cursor-pointer transition-all space-y-2 ${
+                  formData.listingType === 'Donate'
+                    ? 'border-emerald-600 bg-emerald-50 ring-2 ring-emerald-200'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center">
+                  <Gift className="w-5 h-5" />
+                </div>
+                <h4 className="font-bold text-sm text-slate-900">Donate my book</h4>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Offer it completely free to support a junior student.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* STEP 4: Pricing Details */}
+          {formData.listingType !== 'Donate' && (
+            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-soft space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="w-8 h-8 rounded-xl bg-primary text-accent flex items-center justify-center font-black text-sm">
+                  4
+                </span>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">Enter Price</h3>
+                  <p className="text-xs text-slate-500">
+                    {formData.listingType === 'Exchange'
+                      ? 'Optional estimated value for exchange comparison'
+                      : 'Your asking price in USD ($)'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    Your Price ($) <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="price"
+                    value={formData.price}
+                    onChange={handleChange}
+                    placeholder="e.g. 35"
+                    min="0"
+                    step="0.5"
+                    required={formData.listingType === 'Sell'}
+                    className="w-full text-xs sm:text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    Original Retail Price ($) <span className="text-slate-400 font-normal">(Optional)</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="originalPrice"
+                    value={formData.originalPrice}
+                    onChange={handleChange}
+                    placeholder="e.g. 90"
+                    min="0"
+                    className="w-full text-xs sm:text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 5: College & Campus Location */}
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-soft space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-8 rounded-xl bg-primary text-accent flex items-center justify-center font-black text-sm">
+                5
+              </span>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">Campus & Meetup Spot</h3>
+                <p className="text-xs text-slate-500">Where interested students can meet you to complete the handover</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  College / University
+                </label>
+                <input
+                  type="text"
+                  name="college"
+                  value={formData.college}
+                  onChange={handleChange}
+                  placeholder="e.g. Stanford University"
+                  required
+                  className="w-full text-xs sm:text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Preferred Campus Meetup Spot
+                </label>
+                <input
+                  type="text"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  placeholder="e.g. Gates CS Building / Green Library"
+                  required
+                  className="w-full text-xs sm:text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Submit Action Button */}
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full py-4 rounded-2xl bg-accent hover:bg-accent-hover text-white text-base font-black shadow-soft hover:shadow-soft-lg transition-all duration-200 flex items-center justify-center gap-2 transform hover:-translate-y-0.5"
+            >
+              {submitting ? (
+                <span>Publishing Your Listing...</span>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5" />
+                  <span>{isEditing ? 'Save Listing Changes' : 'Publish My Book'}</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+
+        {/* Right: Live Listing Preview (5 columns) */}
+        <div className="lg:col-span-5 sticky top-28 space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Live Listing Preview
+            </span>
+            <span className="text-[11px] text-accent font-semibold flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5" /> What buyers will see
+            </span>
+          </div>
+
+          {/* Preview Card */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-soft-lg overflow-hidden">
+            <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
+              <img
+                src={previewCover}
+                alt="Book cover preview"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute top-3 left-3">
+                <span
+                  className={`px-2.5 py-1 text-xs font-bold rounded-lg shadow-sm text-white ${
+                    formData.listingType === 'Donate'
+                      ? 'bg-emerald-600'
+                      : formData.listingType === 'Exchange'
+                      ? 'bg-purple-600'
+                      : 'bg-primary'
+                  }`}
+                >
+                  {formData.listingType === 'Donate'
+                    ? 'Free Donation'
+                    : formData.listingType === 'Exchange'
+                    ? 'For Exchange'
+                    : 'For Sale'}
+                </span>
+              </div>
+              <div className="absolute bottom-2.5 left-3">
+                <span className="px-2 py-0.5 rounded-md bg-white/95 text-slate-800 text-[11px] font-bold shadow-xs">
+                  {formData.condition}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-5 space-y-3">
+              <span className="text-[11px] font-bold text-accent uppercase tracking-wider block">
+                {formData.category}
+              </span>
+              <h3 className="font-bold text-lg text-slate-900 line-clamp-1 leading-snug">
+                {formData.title || 'Your Book Title Will Appear Here'}
+              </h3>
+              <p className="text-xs text-slate-600 line-clamp-1">
+                by {formData.author || 'Author Name'}
+              </p>
+
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 pt-1">
+                <MapPin className="w-3.5 h-3.5 text-accent shrink-0" />
+                <span className="truncate">{formData.college}</span>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <div>
+                  {formData.listingType === 'Donate' ? (
+                    <span className="text-xl font-black text-emerald-600">FREE</span>
+                  ) : (
+                    <span className="text-xl font-black text-primary">
+                      ${formData.price || '0'}
+                    </span>
+                  )}
+                </div>
+                <span className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold">
+                  View Book
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 bg-cream-50 rounded-2xl border border-cream-200/60 text-xs text-slate-600 space-y-1.5">
+            <p className="font-bold text-slate-800 flex items-center gap-1.5">
+              <Info className="w-3.5 h-3.5 text-accent" />
+              Tip for Fast Responses:
+            </p>
+            <p>
+              Books with real cover photos and accurate condition descriptions sell or swap 3x faster on campus!
+            </p>
+          </div>
         </div>
-      </form>
+      </div>
     </div>
   );
 };

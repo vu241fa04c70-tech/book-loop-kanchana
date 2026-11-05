@@ -1,6 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Heart, Shield, RefreshCw, Sparkles, Mail, MapPin, ExternalLink } from 'lucide-react';
+import {
+  BookOpen,
+  Heart,
+  Shield,
+  RefreshCw,
+  Sparkles,
+  Mail,
+  MapPin,
+  ExternalLink,
+  ArrowRightLeft,
+  Gift
+} from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -40,25 +51,32 @@ const Footer = () => {
             <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
               Marketplace
             </h4>
-            <ul className="space-y-2.5 text-sm">
+            <ul className="space-y-2.5 text-xs sm:text-sm">
               <li>
                 <Link to="/explore" className="hover:text-accent transition-colors">
                   Explore All Books
                 </Link>
               </li>
               <li>
+                <Link to="/exchange" className="hover:text-accent transition-colors flex items-center gap-1.5">
+                  <ArrowRightLeft className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Exchange Books</span>
+                </Link>
+              </li>
+              <li>
                 <Link to="/donations" className="hover:text-accent transition-colors flex items-center gap-1.5">
-                  Free Book Donations <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-bold">Free</span>
+                  <Gift className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Free Donations</span>
                 </Link>
               </li>
               <li>
                 <Link to="/add-book" className="hover:text-accent transition-colors">
-                  List Your Book
+                  Sell a Book
                 </Link>
               </li>
               <li>
                 <Link to="/dashboard" className="hover:text-accent transition-colors">
-                  Student Dashboard
+                  My BookLoop Hub
                 </Link>
               </li>
             </ul>
@@ -67,66 +85,78 @@ const Footer = () => {
           {/* Categories */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
-              Top Categories
+              Popular Subjects
             </h4>
-            <ul className="space-y-2.5 text-sm">
+            <ul className="space-y-2.5 text-xs sm:text-sm">
+              <li>
+                <Link to="/explore?category=Programming" className="hover:text-accent transition-colors">
+                  Programming
+                </Link>
+              </li>
               <li>
                 <Link to="/explore?category=Computer+Science" className="hover:text-accent transition-colors">
-                  Computer Science & IT
+                  Computer Science
                 </Link>
               </li>
               <li>
-                <Link to="/explore?category=Engineering" className="hover:text-accent transition-colors">
-                  Engineering Sciences
+                <Link to="/explore?category=Data+Structures+and+Algorithms" className="hover:text-accent transition-colors">
+                  Data Structures
                 </Link>
               </li>
               <li>
-                <Link to="/explore?category=Medicine+%26+Health" className="hover:text-accent transition-colors">
-                  Medicine & Health
+                <Link to="/explore?category=Artificial+Intelligence" className="hover:text-accent transition-colors">
+                  Artificial Intelligence
                 </Link>
               </li>
               <li>
-                <Link to="/explore?category=Business+%26+Economics" className="hover:text-accent transition-colors">
-                  Business & Economics
-                </Link>
-              </li>
-              <li>
-                <Link to="/explore?category=Mathematics" className="hover:text-accent transition-colors">
-                  Mathematics & Stats
+                <Link to="/explore?category=Novels" className="hover:text-accent transition-colors">
+                  Novels & Fiction
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Campus Safety & Trust */}
+          {/* Support & Legal */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
-              Campus Swaps
+              Help & Policies
             </h4>
-            <div className="bg-primary-800/40 border border-primary-800 p-4 rounded-xl space-y-2 text-xs text-slate-300">
-              <p className="font-semibold text-white flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-accent" /> Safe Campus Meetups
-              </p>
-              <p className="text-[11px] leading-relaxed text-slate-400">
-                Always meet fellow students at well-lit campus landmarks like the university library,
-                student center, or campus cafe.
-              </p>
-              <div className="pt-2 border-t border-primary-700/50">
-                <span className="text-[11px] text-slate-400">Ready to contribute?</span>
-                <Link to="/donations" className="block text-accent font-semibold hover:underline mt-0.5">
-                  Donate a spare textbook →
+            <ul className="space-y-2.5 text-xs sm:text-sm">
+              <li>
+                <Link to="/#how-it-works" className="hover:text-accent transition-colors">
+                  How It Works & FAQs
                 </Link>
-              </div>
-            </div>
+              </li>
+              <li>
+                <Link to="/donations" className="hover:text-accent transition-colors">
+                  Student Donation Drive
+                </Link>
+              </li>
+              <li>
+                <a href="mailto:support@bookloop.org" className="hover:text-accent transition-colors">
+                  Contact Campus Support
+                </a>
+              </li>
+              <li>
+                <span className="text-slate-400 cursor-pointer hover:text-white transition-colors">
+                  Privacy Policy
+                </span>
+              </li>
+              <li>
+                <span className="text-slate-400 cursor-pointer hover:text-white transition-colors">
+                  Terms of Service
+                </span>
+              </li>
+            </ul>
           </div>
         </div>
 
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-          <p>© {new Date().getFullYear()} BookLoop Platform. All rights reserved. Built with React, Node, Express & MongoDB.</p>
+          <p>© {new Date().getFullYear()} BookLoop – Smart Book Exchange & Marketplace Platform. All rights reserved.</p>
           <div className="flex items-center gap-6 text-slate-400">
             <span className="flex items-center gap-1">
-              Made with <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /> for university students
+              Made with <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /> for university book lovers
             </span>
           </div>
         </div>

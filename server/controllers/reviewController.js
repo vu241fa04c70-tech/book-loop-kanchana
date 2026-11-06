@@ -9,17 +9,19 @@ const fallbackDb = require('../utils/fallbackDb');
 // @access  Private
 exports.createReview = async (req, res, next) => {
   try {
-    const { reviewedUserId, transactionType, transactionId, rating, comment } = req.body;
+    const targetUserId = (req.body.reviewedUserId || req.body.reviewedUser || '').toString();
+    const txType = (req.body.transactionType || '').toLowerCase();
+    const { transactionId, rating, comment } = req.body;
     const userId = (req.user._id || req.user.id).toString();
 
-    if (!reviewedUserId || !transactionType || !transactionId || !rating || !comment) {
+    if (!targetUserId || !txType || !transactionId || !rating || !comment) {
       return res.status(400).json({
         success: false,
         message: 'Please provide all review details: user, transaction type, transaction id, rating, and comment'
       });
     }
 
-    if (userId === reviewedUserId.toString()) {
+    if (userId === targetUserId) {
       return res.status(400).json({ success: false, message: 'You cannot review yourself' });
     }
 
@@ -32,13 +34,13 @@ exports.createReview = async (req, res, next) => {
         });
       }
 
-      if (transactionType === 'purchase') {
+      if (txType === 'purchase') {
         const purchase = await PurchaseRequest.findById(transactionId);
         if (!purchase) return res.status(404).json({ success: false, message: 'Purchase not found' });
         if (purchase.status !== 'completed') {
           return res.status(400).json({ success: false, message: 'Reviews only allowed after completion' });
         }
-      } else if (transactionType === 'exchange') {
+      } else if (txType === 'exchange') {
         const exchange = await ExchangeRequest.findById(transactionId);
         if (!exchange) return res.status(404).json({ success: false, message: 'Exchange not found' });
         if (exchange.status !== 'completed') {
@@ -48,8 +50,8 @@ exports.createReview = async (req, res, next) => {
 
       const review = await Review.create({
         reviewer: userId,
-        reviewedUser: reviewedUserId,
-        transactionType,
+        reviewedUser: targetUserId,
+        transactionType: txType,
         transactionId,
         rating: Number(rating),
         comment
@@ -75,8 +77,8 @@ exports.createReview = async (req, res, next) => {
       const newReview = {
         _id: '66f6' + Math.random().toString(16).substring(2, 10).padEnd(20, '0'),
         reviewer,
-        reviewedUser: reviewedUserId,
-        transactionType,
+        reviewedUser: targetUserId,
+        transactionType: txType,
         transactionId,
         rating: Number(rating),
         comment,

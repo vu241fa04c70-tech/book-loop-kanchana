@@ -3,6 +3,8 @@ const router = express.Router();
 const {
   getAllUsers,
   updateUserRole,
+  toggleSuspendUser,
+  deleteUser,
   getAllBooks,
   removeBook,
   toggleFeatureBook,
@@ -17,6 +19,8 @@ router.use(authorize('admin'));
 
 router.get('/users', getAllUsers);
 router.put('/users/:id', updateUserRole);
+router.put('/users/:id/suspend', toggleSuspendUser);
+router.delete('/users/:id', deleteUser);
 router.get('/books', getAllBooks);
 router.delete('/books/:id', removeBook);
 router.put('/books/:id/feature', toggleFeatureBook);

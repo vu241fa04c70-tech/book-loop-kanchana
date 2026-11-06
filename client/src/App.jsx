@@ -16,6 +16,11 @@ import DonationsPage from './pages/DonationsPage';
 import ExchangePage from './pages/ExchangePage';
 import MessagesPage from './pages/MessagesPage';
 import AdminPage from './pages/AdminPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import CommunityPage from './pages/CommunityPage';
+import UserProfilePage from './pages/UserProfilePage';
+import AboutPage from './pages/AboutPage';
 
 function App() {
   return (
@@ -27,10 +32,15 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/explore" element={<ExplorePage />} />
           <Route path="/exchange" element={<ExchangePage />} />
+          <Route path="/community" element={<CommunityPage />} />
+          <Route path="/users/:id" element={<UserProfilePage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/books/:id" element={<BookDetailsPage />} />
           <Route path="/donations" element={<DonationsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password/:resetToken" element={<ResetPasswordPage />} />
 
           {/* Protected Student Routes */}
           <Route

@@ -27,6 +27,9 @@ import EmptyState from '../components/EmptyState';
 const LandingPage = () => {
   const [featuredBooks, setFeaturedBooks] = useState([]);
   const [recentBooks, setRecentBooks] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
+  const [communityPosts, setCommunityPosts] = useState([]);
+  const [bookClubs, setBookClubs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
@@ -35,21 +38,36 @@ const LandingPage = () => {
     const fetchLandingData = async () => {
       setLoading(true);
       try {
-        const [featuredRes, recentRes] = await Promise.all([
-          api.get('/books?featured=true&limit=8'),
-          api.get('/books?limit=12&sort=latest')
+        const [featuredRes, recentRes, recsRes, postsRes, clubsRes] = await Promise.all([
+          api.get('/books?featured=true&limit=8').catch(() => ({ data: { success: false } })),
+          api.get('/books?limit=8&sort=latest').catch(() => ({ data: { success: false } })),
+          api.get('/books/recommendations?limit=4').catch(() => ({ data: { success: false } })),
+          api.get('/community/posts?limit=3').catch(() => ({ data: { success: false } })),
+          api.get('/book-clubs').catch(() => ({ data: { success: false } }))
         ]);
 
-        if (featuredRes.data.success) {
+        if (featuredRes.data?.success) {
           if (featuredRes.data.books && featuredRes.data.books.length > 0) {
             setFeaturedBooks(featuredRes.data.books);
-          } else if (recentRes.data.books && recentRes.data.books.length > 0) {
+          } else if (recentRes.data?.books && recentRes.data.books.length > 0) {
             setFeaturedBooks(recentRes.data.books.slice(0, 4));
           }
         }
 
-        if (recentRes.data.success) {
-          setRecentBooks(recentRes.data.books);
+        if (recentRes.data?.success) {
+          setRecentBooks(recentRes.data.books || []);
+        }
+
+        if (recsRes.data?.success) {
+          setRecommendations(recsRes.data.books || []);
+        }
+
+        if (postsRes.data?.success) {
+          setCommunityPosts(postsRes.data.posts || []);
+        }
+
+        if (clubsRes.data?.success) {
+          setBookClubs(clubsRes.data.clubs?.slice(0, 2) || []);
         }
       } catch (err) {
         console.error('Error fetching landing page data:', err);
@@ -182,15 +200,15 @@ const LandingPage = () => {
 
             {/* Main Heading */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-primary tracking-tight leading-[1.15]">
-              Your Next Favorite Book <br />
+              Every Book Deserves <br />
               <span className="text-accent underline decoration-cream-200 underline-offset-8">
-                Is Waiting!
+                Another Reader.
               </span>
             </h1>
 
             {/* Subheading */}
             <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-              Discover affordable books, exchange your old favorites, and give every book a second life.
+              Buy affordable used textbooks, trade books with classmates, discover peer reading clubs, and build a sustainable campus library.
             </p>
 
             {/* Prominent Search Bar */}
@@ -199,7 +217,7 @@ const LandingPage = () => {
                 <Search className="w-5 h-5 text-slate-400 absolute left-4 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Search by book title, author, or subject..."
+                  placeholder="Search by title, author, ISBN, course, or subject..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-12 pr-32 py-4 text-sm sm:text-base text-slate-800 placeholder:text-slate-400 focus:outline-none"
@@ -213,21 +231,38 @@ const LandingPage = () => {
               </div>
             </form>
 
-            {/* Three Prominent Action Buttons */}
+            {/* Quick Campus Filter Pills */}
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs">
+              <span className="text-slate-400 font-semibold mr-1">Trending Campuses:</span>
+              {['Stanford', 'UC Berkeley', 'Columbia', 'MIT', 'All Campuses'].map((campus) => (
+                <button
+                  key={campus}
+                  type="button"
+                  onClick={() =>
+                    navigate(campus === 'All Campuses' ? '/explore' : `/explore?college=${encodeURIComponent(campus)}`)
+                  }
+                  className="px-2.5 py-1 rounded-full bg-white hover:bg-cream-100 text-slate-600 hover:text-navy border border-slate-200 font-medium transition-colors"
+                >
+                  {campus}
+                </button>
+              ))}
+            </div>
+
+            {/* Three Large Action Buttons */}
             <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 pt-3">
               <Link
                 to="/explore"
                 className="px-6 py-3.5 rounded-2xl bg-primary hover:bg-primary-light text-white font-bold text-sm shadow-soft hover:shadow-soft-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2"
               >
                 <BookOpen className="w-4 h-4 text-accent" />
-                <span>Explore Books</span>
+                <span>Find a Book</span>
               </Link>
               <Link
                 to="/add-book"
                 className="px-6 py-3.5 rounded-2xl bg-accent hover:bg-accent-hover text-white font-bold text-sm shadow-soft hover:shadow-soft-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2"
               >
                 <PlusCircle className="w-4 h-4" />
-                <span>Sell Your Books</span>
+                <span>Sell Your Book</span>
               </Link>
               <Link
                 to="/exchange"
@@ -319,6 +354,109 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* 6B. Community Circles & Campus Reading Clubs Preview */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-widest text-accent flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5" /> Peer Circles & Discussions
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              Campus Readers & Clubs
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1">
+              Connect with fellow students reading course classics, novels, and study guides.
+            </p>
+          </div>
+          <Link
+            to="/community"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-primary hover:text-accent transition-colors"
+          >
+            <span>Visit Community Hub</span>
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Discussions Column */}
+          <div className="lg:col-span-2 space-y-4">
+            <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-accent" /> Trending Campus Discussions
+            </h3>
+            {communityPosts.length === 0 ? (
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 text-center text-xs text-slate-500">
+                Join our first discussion on textbooks, recommendations, and study guides!
+              </div>
+            ) : (
+              communityPosts.slice(0, 3).map((post) => (
+                <div
+                  key={post._id}
+                  className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-sm transition-all"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-bold text-accent uppercase tracking-wider bg-orange-50 px-2 py-0.5 rounded">
+                      {post.category}
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      {new Date(post.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-slate-900 text-sm mb-1">{post.title}</h4>
+                  <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-3">
+                    {post.content}
+                  </p>
+                  <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+                    <span className="font-medium text-slate-700">By {post.author?.name || 'Reader'}</span>
+                    <Link to="/community" className="text-primary hover:text-accent font-semibold flex items-center gap-1">
+                      Join Topic <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Book Clubs Column */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <Users className="w-4 h-4 text-accent" /> Active Reading Clubs
+            </h3>
+            {bookClubs.length === 0 ? (
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 text-center text-xs text-slate-500">
+                No active reading clubs yet. Create one today!
+              </div>
+            ) : (
+              bookClubs.slice(0, 2).map((club) => (
+                <div
+                  key={club._id}
+                  className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <h4 className="font-bold text-slate-900 text-sm">{club.name}</h4>
+                    <span className="text-[10px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">
+                      {club.membersCount || club.members?.length || 1} members
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 line-clamp-2">{club.description}</p>
+                  {club.currentBook?.title && (
+                    <div className="bg-slate-50 p-2.5 rounded-xl text-xs text-slate-700 border border-slate-200/50">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Current Read:</span>
+                      <span className="font-semibold text-slate-900">{club.currentBook.title}</span>
+                    </div>
+                  )}
+                  <Link
+                    to="/community"
+                    className="block text-center bg-navy hover:bg-navy/90 text-white text-xs font-bold py-2 rounded-xl transition-colors"
+                  >
+                    View Club Details
+                  </Link>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* 3. Featured Books Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -359,6 +497,38 @@ const LandingPage = () => {
           />
         )}
       </section>
+
+      {/* 3B. Recommended Books for You Section */}
+      {recommendations.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-widest text-accent flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" /> Personalized Picks
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                Recommended For You
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                Based on trending coursework and peer reader engagement.
+              </p>
+            </div>
+            <Link
+              to="/explore"
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-primary hover:text-accent transition-colors"
+            >
+              <span>Explore Personalized</span>
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {recommendations.map((book) => (
+              <BookCard key={book._id} book={book} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 4. Categories Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -426,9 +596,9 @@ const LandingPage = () => {
           </div>
         ) : (
           <EmptyState
-            title="No recent books found"
-            message="Be the first to list a book and share knowledge with fellow students!"
-            actionText="Add Your First Book"
+            title="No books available yet"
+            message="No books available yet. Be the first to share a book with the community!"
+            actionText="List Your Book"
             actionLink="/add-book"
           />
         )}
@@ -465,6 +635,109 @@ const LandingPage = () => {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* 6B. Community Circles & Campus Reading Clubs Preview */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-widest text-accent flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5" /> Peer Circles & Discussions
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              Campus Readers & Clubs
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1">
+              Connect with fellow students reading course classics, novels, and study guides.
+            </p>
+          </div>
+          <Link
+            to="/community"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-primary hover:text-accent transition-colors"
+          >
+            <span>Visit Community Hub</span>
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Discussions Column */}
+          <div className="lg:col-span-2 space-y-4">
+            <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-accent" /> Trending Campus Discussions
+            </h3>
+            {communityPosts.length === 0 ? (
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 text-center text-xs text-slate-500">
+                Join our first discussion on textbooks, recommendations, and study guides!
+              </div>
+            ) : (
+              communityPosts.slice(0, 3).map((post) => (
+                <div
+                  key={post._id}
+                  className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-sm transition-all"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-bold text-accent uppercase tracking-wider bg-orange-50 px-2 py-0.5 rounded">
+                      {post.category}
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      {new Date(post.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-slate-900 text-sm mb-1">{post.title}</h4>
+                  <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-3">
+                    {post.content}
+                  </p>
+                  <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+                    <span className="font-medium text-slate-700">By {post.author?.name || 'Reader'}</span>
+                    <Link to="/community" className="text-primary hover:text-accent font-semibold flex items-center gap-1">
+                      Join Topic <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Book Clubs Column */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <Users className="w-4 h-4 text-accent" /> Active Reading Clubs
+            </h3>
+            {bookClubs.length === 0 ? (
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 text-center text-xs text-slate-500">
+                No active reading clubs yet. Create one today!
+              </div>
+            ) : (
+              bookClubs.slice(0, 2).map((club) => (
+                <div
+                  key={club._id}
+                  className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <h4 className="font-bold text-slate-900 text-sm">{club.name}</h4>
+                    <span className="text-[10px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">
+                      {club.membersCount || club.members?.length || 1} members
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 line-clamp-2">{club.description}</p>
+                  {club.currentBook?.title && (
+                    <div className="bg-slate-50 p-2.5 rounded-xl text-xs text-slate-700 border border-slate-200/50">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Current Read:</span>
+                      <span className="font-semibold text-slate-900">{club.currentBook.title}</span>
+                    </div>
+                  )}
+                  <Link
+                    to="/community"
+                    className="block text-center bg-navy hover:bg-navy/90 text-white text-xs font-bold py-2 rounded-xl transition-colors"
+                  >
+                    View Club Details
+                  </Link>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -535,6 +808,109 @@ const LandingPage = () => {
             >
               Explore Available Books
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* 6B. Community Circles & Campus Reading Clubs Preview */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-widest text-accent flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5" /> Peer Circles & Discussions
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              Campus Readers & Clubs
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1">
+              Connect with fellow students reading course classics, novels, and study guides.
+            </p>
+          </div>
+          <Link
+            to="/community"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-primary hover:text-accent transition-colors"
+          >
+            <span>Visit Community Hub</span>
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Discussions Column */}
+          <div className="lg:col-span-2 space-y-4">
+            <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-accent" /> Trending Campus Discussions
+            </h3>
+            {communityPosts.length === 0 ? (
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 text-center text-xs text-slate-500">
+                Join our first discussion on textbooks, recommendations, and study guides!
+              </div>
+            ) : (
+              communityPosts.slice(0, 3).map((post) => (
+                <div
+                  key={post._id}
+                  className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-sm transition-all"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-bold text-accent uppercase tracking-wider bg-orange-50 px-2 py-0.5 rounded">
+                      {post.category}
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      {new Date(post.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-slate-900 text-sm mb-1">{post.title}</h4>
+                  <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-3">
+                    {post.content}
+                  </p>
+                  <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+                    <span className="font-medium text-slate-700">By {post.author?.name || 'Reader'}</span>
+                    <Link to="/community" className="text-primary hover:text-accent font-semibold flex items-center gap-1">
+                      Join Topic <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Book Clubs Column */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+              <Users className="w-4 h-4 text-accent" /> Active Reading Clubs
+            </h3>
+            {bookClubs.length === 0 ? (
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 text-center text-xs text-slate-500">
+                No active reading clubs yet. Create one today!
+              </div>
+            ) : (
+              bookClubs.slice(0, 2).map((club) => (
+                <div
+                  key={club._id}
+                  className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <h4 className="font-bold text-slate-900 text-sm">{club.name}</h4>
+                    <span className="text-[10px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">
+                      {club.membersCount || club.members?.length || 1} members
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 line-clamp-2">{club.description}</p>
+                  {club.currentBook?.title && (
+                    <div className="bg-slate-50 p-2.5 rounded-xl text-xs text-slate-700 border border-slate-200/50">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Current Read:</span>
+                      <span className="font-semibold text-slate-900">{club.currentBook.title}</span>
+                    </div>
+                  )}
+                  <Link
+                    to="/community"
+                    className="block text-center bg-navy hover:bg-navy/90 text-white text-xs font-bold py-2 rounded-xl transition-colors"
+                  >
+                    View Club Details
+                  </Link>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>

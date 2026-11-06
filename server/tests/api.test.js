@@ -36,6 +36,7 @@ const makeRequest = (app, options, body = null) => {
       statusCode: 200,
       setHeader: (name, value) => { resHeaders[name.toLowerCase()] = value; },
       getHeader: (name) => resHeaders[name.toLowerCase()],
+      removeHeader: (name) => { delete resHeaders[name.toLowerCase()]; },
       status: function (code) {
         this.statusCode = code;
         return this;

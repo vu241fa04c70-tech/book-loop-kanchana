@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Message = require('../models/Message');
 const Conversation = require('../models/Conversation');
 const fallbackDb = require('../utils/fallbackDb');
+const { createNotification } = require('../utils/notificationHelper');
 
 const getConversationKey = (userId1, userId2, bookId) => {
   const sortedUsers = [userId1.toString(), userId2.toString()].sort();
@@ -13,10 +14,11 @@ const getConversationKey = (userId1, userId2, bookId) => {
 // @access  Private
 exports.sendMessage = async (req, res, next) => {
   try {
-    const { receiverId, message, bookId } = req.body;
+    const { receiverId, bookId } = req.body;
+    const messageText = (req.body.message || req.body.content || '').trim();
     const userId = (req.user._id || req.user.id).toString();
 
-    if (!receiverId || !message || message.trim() === '') {
+    if (!receiverId || !messageText) {
       return res.status(400).json({
         success: false,
         message: 'Please provide receiver ID and message content'
@@ -34,7 +36,7 @@ exports.sendMessage = async (req, res, next) => {
         conversationId,
         sender: userId,
         receiver: receiverId,
-        message: message.trim(),
+        message: messageText,
         book: bookId || undefined
       });
 
@@ -46,12 +48,12 @@ exports.sendMessage = async (req, res, next) => {
       if (!conversation) {
         conversation = await Conversation.create({
           participants: [userId, receiverId],
-          lastMessage: message.trim(),
+          lastMessage: messageText,
           lastSender: userId,
           book: bookId || undefined
         });
       } else {
-        conversation.lastMessage = message.trim();
+        conversation.lastMessage = messageText;
         conversation.lastSender = userId;
         if (bookId && !conversation.book) conversation.book = bookId;
         await conversation.save();
@@ -61,6 +63,17 @@ exports.sendMessage = async (req, res, next) => {
         .populate('sender', 'name profileImage college')
         .populate('receiver', 'name profileImage college')
         .populate('book', 'title author price images');
+
+      // Send in-app notification to message receiver
+      await createNotification({
+        recipientId: receiverId,
+        senderId: userId,
+        type: 'new_message',
+        title: `Message from ${req.user.name || 'a student'}`,
+        message: messageText.length > 60 ? `${messageText.substring(0, 60)}...` : messageText,
+        link: `/messages?user=${userId}${bookId ? `&book=${bookId}` : ''}`,
+        recipientEmail: populatedMessage?.receiver?.email
+      });
 
       return res.status(201).json({ success: true, message: populatedMessage });
     } else {
@@ -73,7 +86,7 @@ exports.sendMessage = async (req, res, next) => {
         conversationId,
         sender,
         receiver: receiver || { _id: receiverId, name: 'Student' },
-        message: message.trim(),
+        message: messageText,
         book,
         read: false,
         createdAt: new Date()
@@ -87,17 +100,27 @@ exports.sendMessage = async (req, res, next) => {
           _id: '6607' + Math.random().toString(16).substring(2, 10).padEnd(20, '0'),
           conversationId,
           participants: [sender, receiver || { _id: receiverId, name: 'Student' }],
-          lastMessage: message.trim(),
+          lastMessage: messageText,
           lastSender: userId,
           book,
           updatedAt: new Date()
         };
         fallbackDb.conversations.unshift(conv);
       } else {
-        conv.lastMessage = message.trim();
+        conv.lastMessage = messageText;
         conv.lastSender = userId;
         conv.updatedAt = new Date();
       }
+
+      await createNotification({
+        recipientId: receiverId,
+        senderId: userId,
+        type: 'new_message',
+        title: `Message from ${req.user.name || 'a student'}`,
+        message: messageText.length > 60 ? `${messageText.substring(0, 60)}...` : messageText,
+        link: `/messages?user=${userId}${bookId ? `&book=${bookId}` : ''}`,
+        recipientEmail: receiver?.email
+      });
 
       return res.status(201).json({ success: true, message: newMsg });
     }
@@ -113,6 +136,14 @@ exports.getMessages = async (req, res, next) => {
   try {
     const { conversationId } = req.params;
     const userId = (req.user._id || req.user.id).toString();
+
+    // Access control: Ensure user is a participant in this conversation
+    if (!conversationId.includes(userId) && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to view this conversation'
+      });
+    }
 
     if (mongoose.connection.readyState === 1) {
       const messages = await Message.find({ conversationId })

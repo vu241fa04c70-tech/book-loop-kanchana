@@ -12,6 +12,11 @@ class FallbackDatabase {
     this.reviews = [];
     this.messages = [];
     this.conversations = [];
+    this.reports = [];
+    this.notifications = [];
+    this.communityPosts = [];
+    this.comments = [];
+    this.bookClubs = [];
     this.init();
   }
 
@@ -222,6 +227,83 @@ class FallbackDatabase {
         book: this.books[2],
         read: false,
         createdAt: new Date('2026-10-27T10:15:00Z')
+      }
+    ];
+
+    this.communityPosts = [
+      {
+        _id: '66d000000000000000000001',
+        author: this.users[0],
+        title: 'Top 5 CS textbooks that actually saved my semester',
+        content: 'From CLRS to Clean Code, here is my honest review of which textbooks are worth keeping on your physical shelf versus just borrowing. What are your must-haves?',
+        category: 'Discussion',
+        tags: ['Computer Science', 'Textbooks', 'StudyTips'],
+        likes: [this.users[1]._id],
+        likesCount: 1,
+        commentsCount: 2,
+        createdAt: new Date('2026-10-28T09:00:00Z')
+      },
+      {
+        _id: '66d000000000000000000002',
+        author: this.users[1],
+        title: 'Looking for study partner for AI / Deep Learning syllabus',
+        content: 'Currently working through Goodfellow’s Deep Learning book. Looking for a study group or someone willing to exchange notes and work on PyTorch projects together!',
+        category: 'Study Group',
+        tags: ['Artificial Intelligence', 'Deep Learning', 'PyTorch'],
+        likes: [this.users[0]._id],
+        likesCount: 1,
+        commentsCount: 1,
+        createdAt: new Date('2026-10-29T14:30:00Z')
+      }
+    ];
+
+    this.comments = [
+      {
+        _id: '66d100000000000000000001',
+        post: '66d000000000000000000001',
+        author: this.users[1],
+        content: '100% agree on CLRS! I reference it even during technical interview prep.',
+        likes: [],
+        createdAt: new Date('2026-10-28T10:15:00Z')
+      }
+    ];
+
+    this.bookClubs = [
+      {
+        _id: '66d200000000000000000001',
+        name: 'Silicon Valley Engineering Readers',
+        description: 'A club dedicated to software engineering classics, architecture design, and system architecture literature.',
+        category: 'Computer Science',
+        creator: this.users[0],
+        members: [this.users[0]._id, this.users[1]._id],
+        membersCount: 2,
+        currentBook: {
+          title: 'Designing Data-Intensive Applications',
+          author: 'Martin Kleppmann',
+          targetDate: new Date('2026-12-15')
+        },
+        meetingSchedule: 'Bi-weekly on Saturdays at 4:00 PM PST',
+        readingGoal: 'Read 6 tech classics this semester',
+        image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80',
+        createdAt: new Date('2026-10-20')
+      },
+      {
+        _id: '66d200000000000000000002',
+        name: 'The Great Fiction & Classics Circle',
+        description: 'Discussing world literature, modern fiction, sci-fi epics, and timeless thought-provoking novels.',
+        category: 'Literature',
+        creator: this.users[1],
+        members: [this.users[1]._id],
+        membersCount: 1,
+        currentBook: {
+          title: 'Project Hail Mary',
+          author: 'Andy Weir',
+          targetDate: new Date('2026-11-30')
+        },
+        meetingSchedule: 'Monthly on Sundays at 6:00 PM PST',
+        readingGoal: '1 book per month with vibrant open discussions',
+        image: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=600&q=80',
+        createdAt: new Date('2026-10-22')
       }
     ];
 

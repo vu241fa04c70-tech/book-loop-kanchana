@@ -14,7 +14,8 @@ import {
   Sparkles,
   ArrowRightLeft,
   Gift,
-  X
+  X,
+  Clock
 } from 'lucide-react';
 import api from '../services/api';
 import BookCard from '../components/BookCard';
@@ -41,6 +42,14 @@ const ExplorePage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [showFiltersPanel, setShowFiltersPanel] = useState(false);
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
+
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('bookloop_recently_viewed') || '[]');
+      setRecentlyViewed(stored);
+    } catch (e) {}
+  }, []);
 
   const categories = [
     'All',
@@ -363,6 +372,31 @@ const ExplorePage = () => {
         </div>
       )}
 
+      {/* Recently Viewed by User */}
+      {recentlyViewed.length > 0 && !hasActiveFilters && (
+        <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-accent" /> Recently Viewed by You
+            </h3>
+            <button
+              onClick={() => {
+                localStorage.removeItem('bookloop_recently_viewed');
+                setRecentlyViewed([]);
+              }}
+              className="text-[11px] text-slate-400 hover:text-rose-500 font-medium"
+            >
+              Clear history
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {recentlyViewed.slice(0, 4).map((b) => (
+              <BookCard key={b._id} book={b} />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 4. Active Results Count Bar */}
       <div className="flex items-center justify-between text-xs text-slate-500 font-medium px-1">
         <span>
@@ -384,9 +418,9 @@ const ExplorePage = () => {
         <BookGridSkeleton count={8} />
       ) : books.length === 0 ? (
         <EmptyState
-          title="Oops! No books found"
-          message="Try another search keyword, reset your price filter, or explore different categories."
-          actionText={hasActiveFilters ? 'Clear All Filters' : 'Add Your First Book'}
+          title="No search results found"
+          message="No search results found matching your criteria. Try adjusting your keywords, price range, or clearing active filters."
+          actionText={hasActiveFilters ? 'Clear Active Filters' : 'List Your Book'}
           onAction={hasActiveFilters ? handleResetFilters : undefined}
           actionLink={hasActiveFilters ? undefined : '/add-book'}
         />

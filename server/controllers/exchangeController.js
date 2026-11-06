@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const ExchangeRequest = require('../models/ExchangeRequest');
 const Book = require('../models/Book');
 const fallbackDb = require('../utils/fallbackDb');
+const { createNotification } = require('../utils/notificationHelper');
 
 // @desc    Create a new exchange request
 // @route   POST /api/exchanges
@@ -73,6 +74,17 @@ exports.createExchangeRequest = async (req, res, next) => {
         .populate('bookOffered', 'title author images price condition category')
         .populate('bookRequested', 'title author images price condition category');
 
+      // Create notification for book owner
+      await createNotification({
+        recipientId: bookRequested.seller,
+        senderId: userId,
+        type: 'exchange_request',
+        title: 'New Book Exchange Proposal',
+        message: `${req.user.name || 'A student'} offered to swap "${bookOffered.title}" for your book "${bookRequested.title}".`,
+        link: '/dashboard?tab=exchanges',
+        recipientEmail: populatedExchange?.owner?.email
+      });
+
       return res.status(201).json({ success: true, exchange: populatedExchange });
     } else {
       const bookRequested = fallbackDb.books.find(
@@ -138,6 +150,17 @@ exports.createExchangeRequest = async (req, res, next) => {
       };
 
       fallbackDb.exchangeRequests.unshift(newExchange);
+
+      await createNotification({
+        recipientId: reqSellerId,
+        senderId: userId,
+        type: 'exchange_request',
+        title: 'New Book Exchange Proposal',
+        message: `${req.user.name || 'A student'} offered to swap "${bookOffered.title}" for your book "${bookRequested.title}".`,
+        link: '/dashboard?tab=exchanges',
+        recipientEmail: owner?.email
+      });
+
       return res.status(201).json({ success: true, exchange: newExchange });
     }
   } catch (err) {
@@ -242,6 +265,12 @@ exports.updateExchangeStatus = async (req, res, next) => {
       exchange.status = status;
       if (meetingLocation) exchange.meetingLocation = meetingLocation;
 
+      if (status === 'accepted') {
+        // Prevent conflicting accepted exchanges: set both books to in-transaction
+        await Book.findByIdAndUpdate(exchange.bookRequested, { availability: 'in-transaction' });
+        await Book.findByIdAndUpdate(exchange.bookOffered, { availability: 'in-transaction' });
+      }
+
       if (status === 'completed') {
         exchange.completedAt = Date.now();
         await Book.findByIdAndUpdate(exchange.bookRequested, { availability: 'exchanged' });
@@ -255,6 +284,21 @@ exports.updateExchangeStatus = async (req, res, next) => {
         .populate('owner', 'name email college phone profileImage')
         .populate('bookOffered', 'title author images price condition category')
         .populate('bookRequested', 'title author images price condition category');
+
+      // Notify the requester of status update
+      await createNotification({
+        recipientId: exchange.requestedBy,
+        senderId: userId,
+        type: status === 'accepted' ? 'exchange_accepted' : status === 'completed' ? 'transaction_completed' : 'exchange_rejected',
+        title: `Exchange Proposal ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+        message: status === 'accepted'
+          ? `Your book exchange proposal for "${updated?.bookRequested?.title || 'the book'}" was accepted! Meetup: ${exchange.meetingLocation}`
+          : status === 'completed'
+          ? `The exchange for "${updated?.bookRequested?.title || 'the book'}" is marked completed. You can now leave a review!`
+          : `Your exchange proposal for "${updated?.bookRequested?.title || 'the book'}" was declined.`,
+        link: '/dashboard?tab=exchanges',
+        recipientEmail: updated?.requestedBy?.email
+      });
 
       return res.status(200).json({ success: true, exchange: updated });
     } else {
@@ -290,6 +334,84 @@ exports.updateExchangeStatus = async (req, res, next) => {
       }
 
       return res.status(200).json({ success: true, exchange });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Confirm handover of exchanged books
+// @route   PUT /api/exchanges/:id/confirm-handover
+// @access  Private
+exports.confirmHandover = async (req, res, next) => {
+  try {
+    const userId = (req.user._id || req.user.id).toString();
+
+    if (mongoose.connection.readyState === 1) {
+      const exchange = await ExchangeRequest.findById(req.params.id);
+      if (!exchange) {
+        return res.status(404).json({ success: false, message: 'Exchange proposal not found' });
+      }
+
+      const isRequester = exchange.requestedBy.toString() === userId;
+      const isOwner = exchange.owner.toString() === userId;
+
+      if (!isRequester && !isOwner) {
+        return res.status(403).json({ success: false, message: 'Not authorized' });
+      }
+
+      if (isRequester) exchange.handoverConfirmedByRequester = true;
+      if (isOwner) exchange.handoverConfirmedByOwner = true;
+
+      if (exchange.handoverConfirmedByRequester && exchange.handoverConfirmedByOwner) {
+        exchange.status = 'completed';
+        exchange.completedAt = Date.now();
+        exchange.handoverConfirmedAt = Date.now();
+        await Book.findByIdAndUpdate(exchange.bookRequested, { availability: 'exchanged' });
+        await Book.findByIdAndUpdate(exchange.bookOffered, { availability: 'exchanged' });
+      }
+
+      await exchange.save();
+      const updated = await ExchangeRequest.findById(exchange._id)
+        .populate('requestedBy', 'name email college phone')
+        .populate('owner', 'name email college phone')
+        .populate('bookOffered', 'title author images')
+        .populate('bookRequested', 'title author images');
+
+      return res.status(200).json({
+        success: true,
+        exchange: updated,
+        isCompleted: updated.status === 'completed',
+        message: updated.status === 'completed'
+          ? 'Handover confirmed by both students! Swap is completed.'
+          : 'Your handover confirmation recorded. Awaiting peer confirmation.'
+      });
+    } else {
+      if (!fallbackDb.exchangeRequests) fallbackDb.exchangeRequests = [];
+      const exchange = fallbackDb.exchangeRequests.find((e) => e._id.toString() === req.params.id.toString());
+      if (!exchange) {
+        return res.status(404).json({ success: false, message: 'Exchange proposal not found' });
+      }
+
+      const isRequester = (exchange.requestedBy._id || exchange.requestedBy).toString() === userId;
+      const isOwner = (exchange.owner._id || exchange.owner).toString() === userId;
+
+      if (isRequester) exchange.handoverConfirmedByRequester = true;
+      if (isOwner) exchange.handoverConfirmedByOwner = true;
+
+      if (exchange.handoverConfirmedByRequester && exchange.handoverConfirmedByOwner) {
+        exchange.status = 'completed';
+        exchange.completedAt = new Date();
+      }
+
+      return res.status(200).json({
+        success: true,
+        exchange,
+        isCompleted: exchange.status === 'completed',
+        message: exchange.status === 'completed'
+          ? 'Handover confirmed by both students! Swap is completed.'
+          : 'Your handover confirmation recorded.'
+      });
     }
   } catch (err) {
     next(err);

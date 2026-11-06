@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Book = require('../models/Book');
 const fallbackDb = require('../utils/fallbackDb');
+const { uploadToCloudinary } = require('../utils/cloudinary');
 
 // @desc    Get all books with search, filters, sorting & pagination
 // @route   GET /api/books
@@ -37,7 +38,9 @@ exports.getBooks = async (req, res, next) => {
           { title: searchRegex },
           { author: searchRegex },
           { subject: searchRegex },
-          { description: searchRegex }
+          { description: searchRegex },
+          { ISBN: searchRegex },
+          { publisher: searchRegex }
         ];
       }
 
@@ -45,6 +48,7 @@ exports.getBooks = async (req, res, next) => {
       if (listingType && listingType !== 'All') query.listingType = listingType;
       if (condition && condition !== 'All') query.condition = condition;
       if (college && college !== 'All') query.college = new RegExp(college.trim(), 'i');
+      if (req.query.city && req.query.city !== 'All') query.city = new RegExp(req.query.city.trim(), 'i');
 
       if (minPrice !== undefined || maxPrice !== undefined) {
         query.price = {};
@@ -211,6 +215,9 @@ exports.createBook = async (req, res, next) => {
       title,
       author,
       ISBN,
+      publisher,
+      edition,
+      exchangePreferences,
       description,
       category,
       subject,
@@ -220,7 +227,8 @@ exports.createBook = async (req, res, next) => {
       images,
       listingType,
       college,
-      location
+      location,
+      city
     } = req.body;
 
     if (!title || !author || !description) {
@@ -237,6 +245,9 @@ exports.createBook = async (req, res, next) => {
         title,
         author,
         ISBN: ISBN || '',
+        publisher: publisher || '',
+        edition: edition || '',
+        exchangePreferences: exchangePreferences || '',
         description,
         category: category || 'Other',
         subject: subject || '',
@@ -248,6 +259,7 @@ exports.createBook = async (req, res, next) => {
         seller: userId,
         college: college || req.user.college,
         location: location || req.user.location,
+        city: city || req.user.city || location || '',
         availability: 'available'
       });
 
@@ -423,19 +435,80 @@ exports.getMyListings = async (req, res, next) => {
 // @desc    Upload book image
 // @route   POST /api/books/upload
 // @access  Private
-exports.uploadImage = (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({
-      success: false,
-      message: 'Please upload an image file'
+exports.uploadImage = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload an image file'
+      });
+    }
+
+    // Attempt Cloudinary upload if configured
+    let imageUrl = null;
+    try {
+      imageUrl = await uploadToCloudinary(req.file.path, 'bookloop_books');
+    } catch (e) {
+      console.warn('Cloudinary upload warning:', e.message);
+    }
+
+    // If Cloudinary succeeded, use its URL; otherwise use local uploaded path
+    const finalUrl = imageUrl || `/uploads/${req.file.filename}`;
+
+    return res.status(200).json({
+      success: true,
+      imageUrl: finalUrl,
+      filename: req.file.filename,
+      storage: imageUrl ? 'cloudinary' : 'local'
     });
+  } catch (err) {
+    next(err);
   }
+};
 
-  const fileUrl = `/uploads/${req.file.filename}`;
+// @desc    Get personalized book recommendations
+// @route   GET /api/books/recommendations
+// @access  Public
+exports.getRecommendations = async (req, res, next) => {
+  try {
+    const { categories, interests, limit = 8 } = req.query;
+    const catList = categories ? categories.split(',').map((c) => c.trim()).filter(Boolean) : [];
 
-  res.status(200).json({
-    success: true,
-    imageUrl: fileUrl,
-    filename: req.file.filename
-  });
+    if (mongoose.connection.readyState === 1) {
+      let query = { availability: 'available' };
+
+      if (catList.length > 0) {
+        query.category = { $in: catList };
+      }
+
+      let books = await Book.find(query)
+        .populate('seller', 'name college city isVerified rating')
+        .sort({ viewsCount: -1, createdAt: -1 })
+        .limit(Number(limit));
+
+      // Fallback if not enough category matches
+      if (books.length < Number(limit)) {
+        const filler = await Book.find({ availability: 'available', _id: { $nin: books.map((b) => b._id) } })
+          .populate('seller', 'name college city isVerified rating')
+          .sort({ createdAt: -1 })
+          .limit(Number(limit) - books.length);
+        books = [...books, ...filler];
+      }
+
+      return res.status(200).json({ success: true, count: books.length, books });
+    } else {
+      let available = fallbackDb.books.filter((b) => b.availability === 'available');
+      let matches = [];
+      if (catList.length > 0) {
+        matches = available.filter((b) => catList.includes(b.category));
+      }
+      if (matches.length < Number(limit)) {
+        const others = available.filter((b) => !matches.includes(b));
+        matches = [...matches, ...others];
+      }
+      return res.status(200).json({ success: true, count: matches.slice(0, Number(limit)).length, books: matches.slice(0, Number(limit)) });
+    }
+  } catch (err) {
+    next(err);
+  }
 };

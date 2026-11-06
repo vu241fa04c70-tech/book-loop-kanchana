@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 
 const purchaseRequestSchema = new mongoose.Schema(
   {
+    orderNumber: {
+      type: String,
+      unique: true,
+      sparse: true
+    },
     buyer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -29,12 +34,47 @@ const purchaseRequestSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'accepted', 'rejected', 'cancelled', 'completed'],
+      enum: ['pending', 'counter_offered', 'accepted', 'rejected', 'cancelled', 'completed', 'disputed'],
       default: 'pending'
+    },
+    counterOfferPrice: {
+      type: Number,
+      min: [0, 'Counter offer cannot be negative']
+    },
+    counterOfferMessage: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    counterOfferStatus: {
+      type: String,
+      enum: ['none', 'pending', 'accepted', 'rejected'],
+      default: 'none'
     },
     meetingLocation: {
       type: String,
       default: 'Campus Library / Student Union'
+    },
+    handoverConfirmedByBuyer: {
+      type: Boolean,
+      default: false
+    },
+    handoverConfirmedBySeller: {
+      type: Boolean,
+      default: false
+    },
+    handoverConfirmedAt: {
+      type: Date
+    },
+    disputeReason: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    disputeStatus: {
+      type: String,
+      enum: ['none', 'open', 'resolved'],
+      default: 'none'
     },
     completedAt: {
       type: Date

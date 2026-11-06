@@ -4,7 +4,11 @@ const {
   createPurchaseRequest,
   getSentPurchases,
   getReceivedPurchases,
-  updatePurchaseStatus
+  updatePurchaseStatus,
+  counterOffer,
+  respondCounterOffer,
+  confirmHandover,
+  reportDispute
 } = require('../controllers/purchaseController');
 const { protect } = require('../middleware/auth');
 
@@ -14,5 +18,9 @@ router.post('/', createPurchaseRequest);
 router.get('/sent', getSentPurchases);
 router.get('/received', getReceivedPurchases);
 router.put('/:id/status', updatePurchaseStatus);
+router.put('/:id/counter-offer', counterOffer);
+router.put('/:id/respond-counter', respondCounterOffer);
+router.put('/:id/confirm-handover', confirmHandover);
+router.post('/:id/dispute', reportDispute);
 
 module.exports = router;

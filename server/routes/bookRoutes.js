@@ -7,7 +7,8 @@ const {
   updateBook,
   deleteBook,
   getMyListings,
-  uploadImage
+  uploadImage,
+  getRecommendations
 } = require('../controllers/bookController');
 const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -16,6 +17,7 @@ router.route('/')
   .get(getBooks)
   .post(protect, createBook);
 
+router.get('/recommendations', getRecommendations);
 router.get('/my-listings', protect, getMyListings);
 
 router.post('/upload', protect, upload.single('image'), uploadImage);

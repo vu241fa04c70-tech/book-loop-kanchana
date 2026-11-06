@@ -62,7 +62,10 @@ const DashboardPage = () => {
     phone: user?.phone || '',
     college: user?.college || '',
     location: user?.location || '',
-    bio: user?.bio || ''
+    city: user?.city || '',
+    bio: user?.bio || '',
+    readingInterests: Array.isArray(user?.readingInterests) ? user.readingInterests.join(', ') : '',
+    favoriteCategories: Array.isArray(user?.favoriteCategories) ? user.favoriteCategories.join(', ') : ''
   });
   const [updatingProfile, setUpdatingProfile] = useState(false);
 
@@ -73,7 +76,10 @@ const DashboardPage = () => {
         phone: user.phone || '',
         college: user.college || '',
         location: user.location || '',
-        bio: user.bio || ''
+        city: user.city || '',
+        bio: user.bio || '',
+        readingInterests: Array.isArray(user.readingInterests) ? user.readingInterests.join(', ') : '',
+        favoriteCategories: Array.isArray(user.favoriteCategories) ? user.favoriteCategories.join(', ') : ''
       });
     }
   }, [user]);
@@ -168,11 +174,36 @@ const DashboardPage = () => {
     }
   };
 
+  // Confirm Dual-Party Handover
+  const handleConfirmHandover = async (id, type) => {
+    try {
+      const endpoint = type === 'purchase' ? `/purchases/${id}/confirm-handover` : `/exchanges/${id}/confirm-handover`;
+      const res = await api.put(endpoint);
+      if (res.data.success) {
+        showToast(res.data.message || 'Handover confirmed!', 'success');
+        fetchDashboardData();
+      }
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to confirm handover', 'error');
+    }
+  };
+
   // Update Profile
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     setUpdatingProfile(true);
-    const result = await updateProfile(profileForm);
+    const interests = typeof profileForm.readingInterests === 'string'
+      ? profileForm.readingInterests.split(',').map((s) => s.trim()).filter(Boolean)
+      : profileForm.readingInterests;
+    const categories = typeof profileForm.favoriteCategories === 'string'
+      ? profileForm.favoriteCategories.split(',').map((s) => s.trim()).filter(Boolean)
+      : profileForm.favoriteCategories;
+
+    const result = await updateProfile({
+      ...profileForm,
+      readingInterests: interests,
+      favoriteCategories: categories
+    });
     setUpdatingProfile(false);
     if (result.success) {
       showToast('Profile information saved!', 'success');
@@ -568,12 +599,20 @@ const DashboardPage = () => {
                             </>
                           )}
                           {req.status === 'accepted' && (
-                            <button
-                              onClick={() => handlePurchaseStatus(req._id, 'completed')}
-                              className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors"
-                            >
-                              Mark as Completed
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleConfirmHandover(req._id, 'purchase')}
+                                className="px-4 py-1.5 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs font-bold transition-colors shadow-sm"
+                              >
+                                Confirm Handover
+                              </button>
+                              <button
+                                onClick={() => handlePurchaseStatus(req._id, 'completed')}
+                                className="px-4 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold transition-colors"
+                              >
+                                Complete Order
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -617,6 +656,24 @@ const DashboardPage = () => {
                             </p>
                           </div>
                         </div>
+
+                        {req.status === 'accepted' && (
+                          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                            <span className="text-xs text-slate-500">
+                              {req.handoverConfirmedByBuyer
+                                ? '✓ You confirmed receiving the book'
+                                : 'Waiting for your handover confirmation'}
+                            </span>
+                            {!req.handoverConfirmedByBuyer && (
+                              <button
+                                onClick={() => handleConfirmHandover(req._id, 'purchase')}
+                                className="px-3.5 py-1.5 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs font-bold transition-colors shadow-sm"
+                              >
+                                Confirm Book Received
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -660,8 +717,10 @@ const DashboardPage = () => {
               {exchangeSubTab === 'received' ? (
                 receivedExchanges.length === 0 ? (
                   <EmptyState
-                    title="No exchange proposals received yet"
+                    title="No exchange requests"
                     message="When a student offers to swap one of their books for yours, it will show up here."
+                    actionText="Find Books to Swap"
+                    actionLink="/exchange"
                   />
                 ) : (
                   <div className="space-y-4">
@@ -714,12 +773,20 @@ const DashboardPage = () => {
                             </>
                           )}
                           {req.status === 'accepted' && (
-                            <button
-                              onClick={() => handleExchangeStatus(req._id, 'completed')}
-                              className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors"
-                            >
-                              Mark Exchange Completed
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleConfirmHandover(req._id, 'exchange')}
+                                className="px-4 py-1.5 rounded-xl bg-accent hover:bg-accent/90 text-white text-xs font-bold transition-colors shadow-sm"
+                              >
+                                Confirm Handover
+                              </button>
+                              <button
+                                onClick={() => handleExchangeStatus(req._id, 'completed')}
+                                className="px-4 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold transition-colors"
+                              >
+                                Mark Completed
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -730,9 +797,9 @@ const DashboardPage = () => {
                 /* Sent Exchanges */
                 sentExchanges.length === 0 ? (
                   <EmptyState
-                    title="No exchange proposals sent"
+                    title="No exchange requests"
                     message="Browse books and click 'Exchange This Book' to initiate a trade."
-                    actionText="Browse Exchange Books"
+                    actionText="Find Books to Swap"
                     actionLink="/exchange"
                   />
                 ) : (
@@ -877,14 +944,49 @@ const DashboardPage = () => {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Campus / Location</label>
-                  <input
-                    type="text"
-                    value={profileForm.location}
-                    onChange={(e) => setProfileForm({ ...profileForm, location: e.target.value })}
-                    className="w-full text-xs sm:text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Campus / Location</label>
+                    <input
+                      type="text"
+                      value={profileForm.location}
+                      onChange={(e) => setProfileForm({ ...profileForm, location: e.target.value })}
+                      className="w-full text-xs sm:text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">City / Region</label>
+                    <input
+                      type="text"
+                      value={profileForm.city}
+                      onChange={(e) => setProfileForm({ ...profileForm, city: e.target.value })}
+                      placeholder="e.g. Berkeley, CA"
+                      className="w-full text-xs sm:text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Reading Interests (comma-separated)</label>
+                    <input
+                      type="text"
+                      value={profileForm.readingInterests}
+                      onChange={(e) => setProfileForm({ ...profileForm, readingInterests: e.target.value })}
+                      placeholder="e.g. Distributed Systems, Algorithms, Sci-Fi"
+                      className="w-full text-xs sm:text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Favorite Genres (comma-separated)</label>
+                    <input
+                      type="text"
+                      value={profileForm.favoriteCategories}
+                      onChange={(e) => setProfileForm({ ...profileForm, favoriteCategories: e.target.value })}
+                      placeholder="e.g. Computer Science, Novels, Mathematics"
+                      className="w-full text-xs sm:text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+                    />
+                  </div>
                 </div>
 
                 <div>

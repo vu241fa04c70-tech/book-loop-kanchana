@@ -13,7 +13,10 @@ import {
   Filter,
   TrendingUp,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  Flag,
+  UserCheck,
+  UserX
 } from 'lucide-react';
 import {
   BarChart,
@@ -43,6 +46,7 @@ const AdminPage = () => {
   const [usersList, setUsersList] = useState([]);
   const [booksList, setBooksList] = useState([]);
   const [transactions, setTransactions] = useState({ purchases: [], exchanges: [] });
+  const [reportsList, setReportsList] = useState([]);
 
   // Filtering states
   const [userSearch, setUserSearch] = useState('');
@@ -51,17 +55,19 @@ const AdminPage = () => {
   const fetchAdminData = async () => {
     setLoading(true);
     try {
-      const [statsRes, usersRes, booksRes, txRes] = await Promise.all([
+      const [statsRes, usersRes, booksRes, txRes, reportsRes] = await Promise.all([
         api.get('/admin/statistics'),
         api.get('/admin/users'),
         api.get('/admin/books'),
-        api.get('/admin/transactions')
+        api.get('/admin/transactions'),
+        api.get('/reports').catch(() => ({ data: { success: true, reports: [] } }))
       ]);
 
       if (statsRes.data.success) setStats(statsRes.data.stats);
       if (usersRes.data.success) setUsersList(usersRes.data.users);
       if (booksRes.data.success) setBooksList(booksRes.data.books);
       if (txRes.data.success) setTransactions(txRes.data);
+      if (reportsRes.data?.success) setReportsList(reportsRes.data.reports || []);
     } catch (err) {
       console.error('Error fetching admin data:', err);
       showToast('Could not load administrative data', 'error');
@@ -86,6 +92,52 @@ const AdminPage = () => {
       }
     } catch (err) {
       showToast('Error modifying user role', 'error');
+    }
+  };
+
+  const handleToggleSuspendUser = async (userId, currentlySuspended) => {
+    const action = currentlySuspended ? 'unsuspend' : 'suspend';
+    if (!window.confirm(`Are you sure you want to ${action} this user?`)) return;
+    try {
+      const res = await api.put(`/admin/users/${userId}/suspend`);
+      if (res.data.success) {
+        showToast(res.data.message || `User ${action}ed successfully`, 'success');
+        setUsersList((prev) =>
+          prev.map((u) => (u._id === userId ? { ...u, isSuspended: res.data.isSuspended } : u))
+        );
+      }
+    } catch (err) {
+      showToast('Error updating user suspension status', 'error');
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Are you sure you want to permanently delete this user and their listings?')) return;
+    try {
+      const res = await api.delete(`/admin/users/${userId}`);
+      if (res.data.success) {
+        showToast('User account deleted permanently', 'info');
+        setUsersList((prev) => prev.filter((u) => u._id !== userId));
+      }
+    } catch (err) {
+      showToast('Error deleting user account', 'error');
+    }
+  };
+
+  const handleUpdateReportStatus = async (reportId, newStatus) => {
+    try {
+      const res = await api.put(`/reports/${reportId}/status`, {
+        status: newStatus,
+        resolutionNotes: `Marked as ${newStatus} by admin`
+      });
+      if (res.data.success) {
+        showToast(`Report marked as ${newStatus}`, 'success');
+        setReportsList((prev) =>
+          prev.map((r) => (r._id === reportId ? { ...r, status: newStatus } : r))
+        );
+      }
+    } catch (err) {
+      showToast('Failed to update report status', 'error');
     }
   };
 
@@ -167,7 +219,8 @@ const AdminPage = () => {
           { id: 'statistics', label: 'Platform Metrics & Charts', icon: TrendingUp },
           { id: 'users', label: `Users (${usersList.length})`, icon: Users },
           { id: 'books', label: `All Books (${booksList.length})`, icon: BookOpen },
-          { id: 'transactions', label: 'Live Transactions Oversight', icon: ArrowRightLeft }
+          { id: 'transactions', label: 'Live Transactions Oversight', icon: ArrowRightLeft },
+          { id: 'reports', label: `Content Reports (${reportsList.length})`, icon: Flag }
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -320,6 +373,7 @@ const AdminPage = () => {
                   <th className="py-3 px-4">College</th>
                   <th className="py-3 px-4">Location</th>
                   <th className="py-3 px-4">Role</th>
+                  <th className="py-3 px-4">Account Status</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -350,14 +404,48 @@ const AdminPage = () => {
                         {u.role}
                       </span>
                     </td>
+                    <td className="py-3 px-4">
+                      <span
+                        className={`px-2 py-0.5 rounded-md font-bold text-[10px] uppercase ${
+                          u.isSuspended
+                            ? 'bg-rose-100 text-rose-800'
+                            : 'bg-emerald-100 text-emerald-800'
+                        }`}
+                      >
+                        {u.isSuspended ? 'Suspended' : 'Active'}
+                      </span>
+                    </td>
                     <td className="py-3 px-4 text-right">
                       {u._id !== user._id && (
-                        <button
-                          onClick={() => handleRoleToggle(u._id, u.role)}
-                          className="px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-[11px]"
-                        >
-                          Toggle {u.role === 'admin' ? 'Student' : 'Admin'}
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => handleRoleToggle(u._id, u.role)}
+                            className="px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-[11px]"
+                            title="Toggle Admin/Student"
+                          >
+                            {u.role === 'admin' ? 'Make Student' : 'Make Admin'}
+                          </button>
+
+                          <button
+                            onClick={() => handleToggleSuspendUser(u._id, u.isSuspended)}
+                            className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors ${
+                              u.isSuspended
+                                ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'
+                                : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200'
+                            }`}
+                            title={u.isSuspended ? 'Unsuspend user' : 'Suspend user'}
+                          >
+                            {u.isSuspended ? 'Reactivate' : 'Suspend'}
+                          </button>
+
+                          <button
+                            onClick={() => handleDeleteUser(u._id)}
+                            className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors"
+                            title="Delete user"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -519,6 +607,128 @@ const AdminPage = () => {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* TAB 5: Content Reports & Flags */}
+      {activeTab === 'reports' && (
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-soft p-6 space-y-4 animate-in fade-in duration-150">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="font-black text-lg text-primary flex items-center gap-2">
+                <Flag className="w-5 h-5 text-rose-600" />
+                <span>Community Reports & Safety Flags</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Review flagged listings, fraud reports, and inappropriate content submitted by members.
+              </p>
+            </div>
+            <span className="text-xs font-bold px-3 py-1 bg-rose-50 text-rose-700 rounded-full border border-rose-200">
+              {reportsList.filter((r) => r.status === 'pending').length} Actionable Pending
+            </span>
+          </div>
+
+          {reportsList.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 space-y-2">
+              <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
+              <h4 className="font-bold text-slate-700 text-sm">Clean Community Record</h4>
+              <p className="text-xs text-slate-500">No inappropriate content or fraud reports have been submitted.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider">
+                    <th className="py-3 px-4">Reported By</th>
+                    <th className="py-3 px-4">Subject</th>
+                    <th className="py-3 px-4">Reason & Details</th>
+                    <th className="py-3 px-4">Date</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Moderation</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {reportsList.map((r) => (
+                    <tr key={r._id} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3 px-4">
+                        <p className="font-bold text-slate-900">{r.reportedBy?.name || 'Member'}</p>
+                        <p className="text-[11px] text-slate-400">{r.reportedBy?.email}</p>
+                      </td>
+                      <td className="py-3 px-4">
+                        {r.reportedBook ? (
+                          <div>
+                            <span className="font-bold text-slate-900 line-clamp-1">
+                              📖 {r.reportedBook.title}
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              by {r.reportedBook.author}
+                            </span>
+                          </div>
+                        ) : r.reportedUser ? (
+                          <div>
+                            <span className="font-bold text-slate-900">
+                              👤 {r.reportedUser.name}
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              {r.reportedUser.email}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 italic">General report</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 max-w-xs">
+                        <span className="px-2 py-0.5 rounded-md font-bold text-[10px] uppercase bg-rose-100 text-rose-800">
+                          {r.reason}
+                        </span>
+                        {r.details && (
+                          <p className="text-xs text-slate-600 mt-1 line-clamp-2">
+                            {r.details}
+                          </p>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-slate-500 whitespace-nowrap">
+                        {new Date(r.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                            r.status === 'resolved'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : r.status === 'dismissed'
+                              ? 'bg-slate-100 text-slate-600'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {r.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        {r.status === 'pending' ? (
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => handleUpdateReportStatus(r._id, 'resolved')}
+                              className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition-colors"
+                            >
+                              Resolve
+                            </button>
+                            <button
+                              onClick={() => handleUpdateReportStatus(r._id, 'dismissed')}
+                              className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-[11px] transition-colors"
+                            >
+                              Dismiss
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 italic">Closed</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </div>

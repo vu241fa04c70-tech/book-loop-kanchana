@@ -19,7 +19,8 @@ import {
   Send,
   User,
   ChevronRight,
-  ArrowRight
+  ArrowRight,
+  Flag
 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -51,6 +52,12 @@ const BookDetailsPage = () => {
   const [purchaseMessage, setPurchaseMessage] = useState('');
   const [submittingAction, setSubmittingAction] = useState(false);
 
+  // Report Modal States
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('inappropriate');
+  const [reportDetails, setReportDetails] = useState('');
+  const [submittingReport, setSubmittingReport] = useState(false);
+
   useEffect(() => {
     const fetchBookDetails = async () => {
       setLoading(true);
@@ -60,6 +67,13 @@ const BookDetailsPage = () => {
           const bookData = res.data.book;
           setBook(bookData);
           setPurchasePrice(bookData.price !== undefined ? bookData.price : '');
+
+          // Save to recently viewed
+          try {
+            const viewed = JSON.parse(localStorage.getItem('bookloop_recently_viewed') || '[]');
+            const filtered = viewed.filter((b) => b._id !== bookData._id);
+            localStorage.setItem('bookloop_recently_viewed', JSON.stringify([bookData, ...filtered].slice(0, 10)));
+          } catch (e) {}
 
           // Check if book is saved in wishlist
           if (isAuthenticated) {
@@ -244,6 +258,35 @@ const BookDetailsPage = () => {
     }
     const sellerId = book.seller?._id || book.seller;
     navigate(`/messages?user=${sellerId}&book=${id}`);
+  };
+
+  // Submit Listing/User Report
+  const handleSubmitReport = async (e) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      showToast('Please sign in to report a listing', 'info');
+      navigate('/login');
+      return;
+    }
+    setSubmittingReport(true);
+    try {
+      const res = await api.post('/reports', {
+        reportedBookId: id,
+        reportedUserId: book.seller?._id || book.seller,
+        reason: reportReason,
+        details: reportDetails.trim()
+      });
+      if (res.data.success) {
+        showToast('Thank you. Your report has been submitted to moderators.', 'success');
+        setShowReportModal(false);
+        setReportDetails('');
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Failed to submit report';
+      showToast(msg, 'error');
+    } finally {
+      setSubmittingReport(false);
+    }
   };
 
   if (loading) {
@@ -433,6 +476,21 @@ const BookDetailsPage = () => {
                 <strong>ISBN:</strong> {book.ISBN}
               </p>
             )}
+            {book.publisher && (
+              <p className="text-xs text-slate-500">
+                <strong>Publisher:</strong> {book.publisher}
+              </p>
+            )}
+            {book.edition && (
+              <p className="text-xs text-slate-500">
+                <strong>Edition:</strong> {book.edition}
+              </p>
+            )}
+            {book.exchangePreferences && (
+              <p className="text-xs text-purple-700 bg-purple-50 p-2.5 rounded-xl border border-purple-100 mt-2">
+                <strong>Exchange Preferences:</strong> {book.exchangePreferences}
+              </p>
+            )}
           </div>
 
           {/* Seller Profile Card */}
@@ -445,10 +503,13 @@ const BookDetailsPage = () => {
               />
               <div>
                 <div className="flex items-center gap-2">
-                  <h4 className="font-bold text-sm text-slate-900">
+                  <Link
+                    to={`/users/${book.seller?._id || book.seller}`}
+                    className="font-bold text-sm text-slate-900 hover:text-accent flex items-center gap-1"
+                  >
                     {book.seller?.name || 'Verified Student'}
-                  </h4>
-                  <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                    <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                  </Link>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
                   <MapPin className="w-3.5 h-3.5 text-accent shrink-0" />
@@ -457,6 +518,12 @@ const BookDetailsPage = () => {
                 <div className="text-[11px] text-slate-400 mt-0.5">
                   Location: {book.location || 'Campus Center'}
                 </div>
+                <Link
+                  to={`/users/${book.seller?._id || book.seller}`}
+                  className="text-xs text-primary hover:text-accent font-semibold mt-1 inline-block"
+                >
+                  View Reader Profile & Reviews →
+                </Link>
               </div>
             </div>
 
@@ -560,6 +627,20 @@ const BookDetailsPage = () => {
                   Chat with Seller
                 </button>
               </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-between text-xs text-slate-400">
+              <span className="flex items-center gap-1.5 text-slate-500 font-medium">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> BookLoop Peer Protection
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowReportModal(true)}
+                className="text-slate-400 hover:text-rose-600 font-semibold flex items-center gap-1 transition-colors"
+                title="Report inappropriate content or fraud"
+              >
+                <Flag className="w-3.5 h-3.5" /> Report listing
+              </button>
             </div>
           </div>
         </div>
@@ -778,6 +859,82 @@ const BookDetailsPage = () => {
                   className="flex-1 py-2.5 rounded-xl bg-primary hover:bg-primary-light disabled:bg-slate-300 text-white text-xs font-bold transition-colors shadow-soft"
                 >
                   {submittingAction ? 'Sending Offer...' : 'Send Purchase Request'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Report Listing Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 space-y-5 shadow-2xl relative">
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="text-xs font-bold text-rose-600 uppercase tracking-wider flex items-center gap-1">
+                  <Flag className="w-3.5 h-3.5" /> Community Moderation
+                </span>
+                <h3 className="text-xl font-black text-slate-900">Report This Listing</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowReportModal(false)}
+                className="p-1 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Help us keep BookLoop safe and trustworthy. Our moderation team reviews every report.
+            </p>
+
+            <form onSubmit={handleSubmitReport} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Reason for Report:
+                </label>
+                <select
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  className="w-full p-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-400"
+                >
+                  <option value="inappropriate">Inappropriate or prohibited content</option>
+                  <option value="fraud">Fraudulent seller / Suspicious behavior</option>
+                  <option value="counterfeit">Misrepresented / Pirated / Counterfeit copy</option>
+                  <option value="harassment">Harassment or abusive conduct</option>
+                  <option value="other">Other policy concern</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Additional Details:
+                </label>
+                <textarea
+                  rows={3}
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  placeholder="Describe the issue with this listing or seller..."
+                  className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-400"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowReportModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingReport}
+                  className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-xs font-bold transition-colors shadow-soft"
+                >
+                  {submittingReport ? 'Submitting...' : 'Submit Report'}
                 </button>
               </div>
             </form>

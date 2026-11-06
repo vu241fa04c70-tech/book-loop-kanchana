@@ -33,6 +33,10 @@ const AddBookPage = () => {
     title: '',
     author: '',
     ISBN: '',
+    publisher: '',
+    edition: '',
+    exchangePreferences: '',
+    city: user?.city || '',
     description: '',
     category: 'Computer Science',
     subject: '',
@@ -77,6 +81,10 @@ const AddBookPage = () => {
               title: b.title,
               author: b.author,
               ISBN: b.ISBN || '',
+              publisher: b.publisher || '',
+              edition: b.edition || '',
+              exchangePreferences: b.exchangePreferences || '',
+              city: b.city || '',
               description: b.description,
               category: b.category,
               subject: b.subject || '',
@@ -372,6 +380,50 @@ const AddBookPage = () => {
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    ISBN (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    name="ISBN"
+                    value={formData.ISBN}
+                    onChange={handleChange}
+                    placeholder="e.g. 978-0134685991"
+                    className="w-full text-xs sm:text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    Publisher (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    name="publisher"
+                    value={formData.publisher}
+                    onChange={handleChange}
+                    placeholder="e.g. Pearson, O'Reilly"
+                    className="w-full text-xs sm:text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    Edition (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    name="edition"
+                    value={formData.edition}
+                    onChange={handleChange}
+                    placeholder="e.g. 3rd Edition"
+                    className="w-full text-xs sm:text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
                   Description <span className="text-rose-500">*</span>
@@ -480,6 +532,22 @@ const AddBookPage = () => {
                 </p>
               </div>
             </div>
+
+            {formData.listingType === 'Exchange' && (
+              <div className="pt-2 animate-in fade-in duration-200">
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Exchange Preferences (What books or subjects would you like?)
+                </label>
+                <input
+                  type="text"
+                  name="exchangePreferences"
+                  value={formData.exchangePreferences}
+                  onChange={handleChange}
+                  placeholder="e.g. Looking for Machine Learning textbooks, Design Patterns, or Calculus III"
+                  className="w-full text-xs sm:text-sm p-3 bg-purple-50/50 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
+                />
+              </div>
+            )}
           </div>
 
           {/* STEP 4: Pricing Details */}
@@ -547,7 +615,7 @@ const AddBookPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
                   College / University
@@ -559,6 +627,20 @@ const AddBookPage = () => {
                   onChange={handleChange}
                   placeholder="e.g. Stanford University"
                   required
+                  className="w-full text-xs sm:text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  City / Region
+                </label>
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  placeholder="e.g. Palo Alto, CA"
                   className="w-full text-xs sm:text-sm p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40"
                 />
               </div>
@@ -673,6 +755,22 @@ const AddBookPage = () => {
                 </span>
               </div>
             </div>
+
+            {formData.listingType === 'Exchange' && (
+              <div className="pt-2 animate-in fade-in duration-200">
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Exchange Preferences (What books or subjects would you like?)
+                </label>
+                <input
+                  type="text"
+                  name="exchangePreferences"
+                  value={formData.exchangePreferences}
+                  onChange={handleChange}
+                  placeholder="e.g. Looking for Machine Learning textbooks, Design Patterns, or Calculus III"
+                  className="w-full text-xs sm:text-sm p-3 bg-purple-50/50 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
+                />
+              </div>
+            )}
           </div>
 
           <div className="p-4 bg-cream-50 rounded-2xl border border-cream-200/60 text-xs text-slate-600 space-y-1.5">

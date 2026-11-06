@@ -191,8 +191,10 @@ const MessagesPage = () => {
             ) : (
               <div className="p-8 text-center text-xs text-slate-400 space-y-2">
                 <MessageSquare className="w-8 h-8 text-slate-300 mx-auto" />
-                <p>No active conversations yet.</p>
-                <p className="text-[11px]">Contact a seller from any book listing to begin chatting.</p>
+                <p className="font-bold text-slate-700">No messages yet</p>
+                <p className="text-[11px] text-slate-500">
+                  Tip: Start a conversation by visiting any book listing and tapping "Chat with Seller" or "Contact Seller".
+                </p>
               </div>
             )}
           </div>
@@ -307,11 +309,11 @@ const MessagesPage = () => {
               </form>
             </>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-400">
-              <MessageSquare className="w-12 h-12 text-slate-300 mb-3" />
-              <h3 className="font-bold text-slate-700 text-sm">Select a Conversation</h3>
-              <p className="text-xs text-slate-400 mt-1 max-w-xs">
-                Pick a student thread from the left or visit an explore listing to message a seller.
+            <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-400 space-y-2">
+              <MessageSquare className="w-12 h-12 text-slate-300 mb-1" />
+              <h3 className="font-bold text-slate-700 text-base">No messages yet</h3>
+              <p className="text-xs text-slate-500 max-w-sm">
+                Start a conversation by selecting a student on the left or contacting a seller from Explore Books.
               </p>
             </div>
           )}

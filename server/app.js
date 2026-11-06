@@ -1,8 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 const errorHandler = require('./middleware/error');
 
 // Import routes
@@ -15,6 +17,10 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const donationRoutes = require('./routes/donationRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const reportRoutes = require('./routes/reportRoutes');
+const communityRoutes = require('./routes/communityRoutes');
+const bookClubRoutes = require('./routes/bookClubRoutes');
 
 const app = express();
 
@@ -31,6 +37,11 @@ const authLimiter = rateLimit({
 });
 
 // Middlewares
+app.use(helmet({
+  hidePoweredBy: false,
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(
   cors({
     origin: true, // Allow frontend origin dynamically
@@ -71,6 +82,10 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/community', communityRoutes);
+app.use('/api/book-clubs', bookClubRoutes);
 
 // Catch-all 404 handler for unknown API routes
 app.all('/api/*', (req, res) => {
@@ -79,6 +94,22 @@ app.all('/api/*', (req, res) => {
     message: `API endpoint not found: ${req.method} ${req.originalUrl}`
   });
 });
+
+// Serve frontend Single Page Application (SPA) if client/dist exists
+const clientDistPath = path.join(__dirname, '../client/dist');
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+      return next();
+    }
+    const indexPath = path.join(clientDistPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      return res.sendFile(indexPath);
+    }
+    next();
+  });
+}
 
 // Centralized Error Handling Middleware
 app.use(errorHandler);

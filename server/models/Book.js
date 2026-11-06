@@ -97,9 +97,29 @@ const bookSchema = new mongoose.Schema(
       required: [true, 'Location is required'],
       trim: true
     },
+    publisher: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    edition: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    exchangePreferences: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    city: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     availability: {
       type: String,
-      enum: ['available', 'pending', 'exchanged', 'sold', 'donated'],
+      enum: ['available', 'pending', 'in-transaction', 'exchanged', 'sold', 'donated'],
       default: 'available'
     },
     featured: {
@@ -120,8 +140,8 @@ const bookSchema = new mongoose.Schema(
   }
 );
 
-// Text index for search
-bookSchema.index({ title: 'text', author: 'text', subject: 'text', description: 'text' });
-bookSchema.index({ category: 1, listingType: 1, college: 1, availability: 1, isSample: 1 });
+// Text index for search across title, author, subject, description, ISBN, publisher, and category
+bookSchema.index({ title: 'text', author: 'text', subject: 'text', description: 'text', ISBN: 'text', publisher: 'text', category: 'text' });
+bookSchema.index({ category: 1, listingType: 1, college: 1, city: 1, availability: 1, isSample: 1 });
 
 module.exports = mongoose.model('Book', bookSchema);

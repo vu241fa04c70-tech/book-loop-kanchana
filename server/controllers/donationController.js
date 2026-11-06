@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Book = require('../models/Book');
 const PurchaseRequest = require('../models/PurchaseRequest');
 const fallbackDb = require('../utils/fallbackDb');
+const { createNotification } = require('../utils/notificationHelper');
 
 // @desc    Get all books available for donation (free)
 // @route   GET /api/donations
@@ -149,6 +150,17 @@ exports.requestDonation = async (req, res, next) => {
         .populate('buyer', 'name email college phone profileImage')
         .populate('seller', 'name email college phone profileImage')
         .populate('book', 'title author images listingType availability');
+
+      // Create notification for donor
+      await createNotification({
+        recipientId: book.seller,
+        senderId: userId,
+        type: 'donation_request',
+        title: 'New Free Book Request',
+        message: `${req.user.name || 'A student'} requested your free donated book "${book.title}".`,
+        link: '/dashboard?tab=purchases',
+        recipientEmail: populated?.seller?.email
+      });
 
       return res.status(201).json({
         success: true,

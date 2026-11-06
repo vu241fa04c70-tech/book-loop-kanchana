@@ -105,6 +105,49 @@ exports.updateUserRole = async (req, res, next) => {
   }
 };
 
+// @desc    Toggle user suspension (Admin only)
+// @route   PUT /api/admin/users/:id/suspend
+// @access  Private/Admin
+exports.toggleSuspendUser = async (req, res, next) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const user = await User.findById(req.params.id);
+      if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+      user.isSuspended = !user.isSuspended;
+      await user.save();
+      return res.status(200).json({ success: true, isSuspended: user.isSuspended });
+    } else {
+      const user = fallbackDb.users.find((u) => u._id.toString() === req.params.id.toString());
+      if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+      user.isSuspended = !user.isSuspended;
+      return res.status(200).json({ success: true, isSuspended: user.isSuspended });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Delete user account (Admin only)
+// @route   DELETE /api/admin/users/:id
+// @access  Private/Admin
+exports.deleteUser = async (req, res, next) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const user = await User.findById(req.params.id);
+      if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+      await user.deleteOne();
+      return res.status(200).json({ success: true, message: 'User deleted successfully' });
+    } else {
+      const idx = fallbackDb.users.findIndex((u) => u._id.toString() === req.params.id.toString());
+      if (idx === -1) return res.status(404).json({ success: false, message: 'User not found' });
+      fallbackDb.users.splice(idx, 1);
+      return res.status(200).json({ success: true, message: 'User deleted successfully' });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
 // @desc    Get all books for admin inspection
 // @route   GET /api/admin/books
 // @access  Private/Admin
